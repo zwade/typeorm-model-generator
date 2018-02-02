@@ -30,7 +30,7 @@
     "oracledb": "^2.0.15",
     "pg": "^7.4.0",
     "reflect-metadata": "^0.1.10",
-    "typeorm": "^0.2.0-alpha.13",
+    "typeorm": "bluepichu/typeorm#postgres-enums",
     "change-case": "^3.0.1",
     "typescript": "^2.6.1",
     "yargs": "^11.0.0",
