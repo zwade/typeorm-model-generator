@@ -525,6 +525,11 @@ order by
             return resp.recordset.length > 0;
         });
     }
+    GetEnums(schema) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return [];
+        });
+    }
 }
 exports.MssqlDriver = MssqlDriver;
 //# sourceMappingURL=MssqlDriver.js.map

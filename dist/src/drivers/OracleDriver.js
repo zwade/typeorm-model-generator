@@ -315,6 +315,11 @@ class OracleDriver extends AbstractDriver_1.AbstractDriver {
             return true;
         });
     }
+    GetEnums(schema) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return [];
+        });
+    }
 }
 exports.OracleDriver = OracleDriver;
 //# sourceMappingURL=OracleDriver.js.map

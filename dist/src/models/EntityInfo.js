@@ -4,7 +4,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
  * EntityInfo
  */
 class EntityInfo {
-    relationImports() {
+    imports() {
         var returnString = "";
         var imports = [];
         this.Columns.forEach(column => {
@@ -12,6 +12,9 @@ class EntityInfo {
                 if (this.EntityName != relation.relatedTable)
                     imports.push(relation.relatedTable);
             });
+            if (column.ts_type && typeof column.ts_type !== "string") {
+                imports.push(column.ts_type.name);
+            }
         });
         this.UniqueImports = imports.filter(function (elem, index, self) {
             return index == self.indexOf(elem);

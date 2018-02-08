@@ -526,6 +526,11 @@ class MysqlDriver extends AbstractDriver_1.AbstractDriver {
             return ret;
         });
     }
+    GetEnums(schema) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return [];
+        });
+    }
 }
 exports.MysqlDriver = MysqlDriver;
 //# sourceMappingURL=MysqlDriver.js.map

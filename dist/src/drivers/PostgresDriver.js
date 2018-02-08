@@ -49,7 +49,7 @@ class PostgresDriver extends AbstractDriver_1.AbstractDriver {
         return __awaiter(this, void 0, void 0, function* () {
             let response = (yield this.Connection
                 .query(`SELECT table_name,column_name,column_default,is_nullable,
-            data_type,character_maximum_length,numeric_precision,numeric_scale
+            udt_name,character_maximum_length,numeric_precision,numeric_scale
             --,COLUMNPROPERTY(object_id(table_name), column_name, 'isidentity') isidentity
            , case when column_default LIKE 'nextval%' then 'YES' else 'NO' end isidentity
             FROM INFORMATION_SCHEMA.COLUMNS where table_schema ='${schema}'`))
@@ -69,12 +69,12 @@ class PostgresDriver extends AbstractDriver_1.AbstractDriver {
                     colInfo.default = colInfo.is_generated
                         ? ""
                         : resp.column_default;
-                    switch (resp.data_type) {
-                        case "integer":
+                    switch (resp.udt_name) {
+                        case "int4":
                             colInfo.ts_type = "number";
                             colInfo.sql_type = "int";
                             break;
-                        case "character varying":
+                        case "varchar":
                             colInfo.ts_type = "string";
                             colInfo.sql_type = "varchar";
                             colInfo.char_max_lenght =
@@ -90,11 +90,11 @@ class PostgresDriver extends AbstractDriver_1.AbstractDriver {
                             colInfo.ts_type = "string";
                             colInfo.sql_type = "uuid";
                             break;
-                        case "smallint":
+                        case "int2":
                             colInfo.ts_type = "number";
                             colInfo.sql_type = "smallint";
                             break;
-                        case "bigint":
+                        case "int8":
                             colInfo.ts_type = "string";
                             colInfo.sql_type = "bigint";
                             break;
@@ -102,17 +102,17 @@ class PostgresDriver extends AbstractDriver_1.AbstractDriver {
                             colInfo.ts_type = "string";
                             colInfo.sql_type = "date";
                             break;
-                        case "boolean":
+                        case "bool":
                             colInfo.ts_type = "boolean";
                             colInfo.sql_type = "boolean";
                             break;
-                        case "double precision":
+                        case "float8":
                             colInfo.ts_type = "number";
                             colInfo.sql_type = "double";
                             colInfo.numericPrecision = resp.numeric_precision;
                             colInfo.numericScale = resp.numeric_scale;
                             break;
-                        case "real":
+                        case "float4":
                             colInfo.ts_type = "number";
                             colInfo.sql_type = "float";
                             colInfo.numericPrecision = resp.numeric_precision;
@@ -124,21 +124,21 @@ class PostgresDriver extends AbstractDriver_1.AbstractDriver {
                             colInfo.numericPrecision = resp.numeric_precision;
                             colInfo.numericScale = resp.numeric_scale;
                             break;
-                        case "time without time zone":
+                        case "time":
                             colInfo.ts_type = "string";
                             colInfo.sql_type = "time without time zone";
                             break;
-                        case "timestamp without time zone":
+                        case "timetz":
                             colInfo.ts_type = "Date";
-                            colInfo.sql_type = "timestamp";
+                            colInfo.sql_type = "time with time zone";
                             break;
-                        case "timestamp with time zone":
+                        case "timestamp":
                             colInfo.ts_type = "Date";
-                            colInfo.sql_type = "timestamp";
+                            colInfo.sql_type = "timestamp without time zone";
                             break;
-                        case "timestamp with time zone":
+                        case "timestamptz":
                             colInfo.ts_type = "Date";
-                            colInfo.sql_type = "timestamp";
+                            colInfo.sql_type = "timestamp with time zone";
                             break;
                         case "json":
                             colInfo.ts_type = "Object";
@@ -167,10 +167,6 @@ class PostgresDriver extends AbstractDriver_1.AbstractDriver {
                         case "interval":
                             colInfo.ts_type = "any";
                             colInfo.sql_type = "interval";
-                            break;
-                        case "time with time zone":
-                            colInfo.ts_type = "string";
-                            colInfo.sql_type = "time with time zone";
                             break;
                         case "point":
                             colInfo.ts_type = "string | Object";
@@ -216,7 +212,7 @@ class PostgresDriver extends AbstractDriver_1.AbstractDriver {
                             colInfo.ts_type = "string";
                             colInfo.sql_type = "bit";
                             break;
-                        case "bit varying":
+                        case "varbit":
                             colInfo.ts_type = "string";
                             colInfo.sql_type = "bit varying";
                             break;
@@ -225,7 +221,9 @@ class PostgresDriver extends AbstractDriver_1.AbstractDriver {
                             colInfo.sql_type = "xml";
                             break;
                         default:
-                            TomgUtils.LogFatalError("Unknown column type:" + resp.data_type);
+                            // Assume that it's a user-defined enum
+                            colInfo.ts_type = { kind: "enum", name: resp.udt_name };
+                            colInfo.sql_type = "varchar";
                             break;
                     }
                     if (colInfo.sql_type)
@@ -460,6 +458,27 @@ class PostgresDriver extends AbstractDriver_1.AbstractDriver {
                 }
             });
             return entities;
+        });
+    }
+    GetEnums(schema) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let enumsResponse = (yield this.Connection.query(`
+            SELECT t.typname AS enum_name,
+                e.enumlabel AS enum_value
+            FROM pg_type t
+                JOIN pg_enum e ON t.oid = e.enumtypid
+                JOIN pg_catalog.pg_namespace n ON n.oid = t.typnamespace
+            WHERE n.nspname = '${schema}'`))
+                .rows;
+            let enums = enumsResponse
+                .reduce((enums, { enum_name, enum_value }) => {
+                if (!enums.has(enum_name)) {
+                    enums.set(enum_name, []);
+                }
+                enums.get(enum_name).push(enum_value);
+                return enums;
+            }, new Map());
+            return Array.from(enums.keys()).map((name) => ({ name, values: enums.get(name) }));
         });
     }
     DisconnectFromServer() {

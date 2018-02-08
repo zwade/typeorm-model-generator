@@ -13,7 +13,8 @@
         "strictNullChecks": true,
         "moduleResolution": "node",
         "outDir": "dist",
-        "newLine": "LF"
+        "newLine": "LF",
+        "pretty": true
     },
     "include": [
         "src",

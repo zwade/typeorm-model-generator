@@ -55,17 +55,6 @@ class Engine {
         }
         let compliedTemplate = Handlebars.compile(template, { noEscape: true });
         databaseModel.entities.forEach(element => {
-            element.Imports = [];
-            element.Columns.forEach(column => {
-                column.relations.forEach(relation => {
-                    if (element.EntityName !== relation.relatedTable) {
-                        element.Imports.push(relation.relatedTable);
-                    }
-                });
-            });
-            element.Imports.filter(function (elem, index, self) {
-                return index === self.indexOf(elem);
-            });
             let casedFileName = "";
             switch (this.Options.convertCaseFile) {
                 case "camel":
@@ -88,12 +77,35 @@ class Engine {
                 flag: "w"
             });
         });
+        let enumTemplatePath = path.resolve(__dirname, "../../src/enum.mst");
+        let enumTemplate = fs.readFileSync(enumTemplatePath, "UTF-8");
+        let compiledEnumTemplate = Handlebars.compile(enumTemplate, { noEscape: true });
+        databaseModel.enums.forEach((en) => {
+            let rendered = compiledEnumTemplate(en);
+            let casedFileName = "";
+            switch (this.Options.convertCaseFile) {
+                case "camel":
+                    casedFileName = changeCase.camelCase(en.name);
+                    break;
+                case "param":
+                    casedFileName = changeCase.paramCase(en.name);
+                    break;
+                case "pascal":
+                    casedFileName = changeCase.pascalCase(en.name);
+                    break;
+                case "none":
+                    casedFileName = en.name;
+                    break;
+            }
+            let resultFilePath = path.resolve(entitesPath, casedFileName + ".ts");
+            fs.writeFileSync(resultFilePath, rendered, {
+                encoding: "UTF-8",
+                flag: "w"
+            });
+        });
     }
     createHandlebarsHelpers() {
-        Handlebars.registerHelper("curly", open => {
-            return open ? "{" : "}";
-        });
-        Handlebars.registerHelper("toEntityName", str => {
+        let toEntityName = (str) => {
             let retStr = "";
             switch (this.Options.convertCaseEntity) {
                 case "camel":
@@ -107,7 +119,11 @@ class Engine {
                     break;
             }
             return retStr;
+        };
+        Handlebars.registerHelper("curly", open => {
+            return open ? "{" : "}";
         });
+        Handlebars.registerHelper("toEntityName", str => toEntityName(str));
         Handlebars.registerHelper("array", str => str + "[]");
         Handlebars.registerHelper("makeLazy", str => this.Options.lazy ? `Promise<${str}>` : str);
         Handlebars.registerHelper("addLazyParameter", () => this.Options.lazy ? `, { lazy: true }` : "");
@@ -128,6 +144,15 @@ class Engine {
                     break;
             }
             return retStr;
+        });
+        Handlebars.registerHelper("constantCase", str => changeCase.constantCase(str));
+        Handlebars.registerHelper("tsTypeToString", obj => {
+            if (typeof obj === "string") {
+                return obj;
+            }
+            else {
+                return toEntityName(obj.name);
+            }
         });
         Handlebars.registerHelper("toPropertyName", str => {
             let retStr = "";

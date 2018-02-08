@@ -1,4 +1,5 @@
 import { EntityInfo } from "./../models/EntityInfo";
+import { EnumInfo } from "./../models/EnumInfo";
 import { DatabaseModel } from "./../models/DatabaseModel";
 /**
  * AbstractDriver
@@ -19,6 +20,7 @@ export abstract class AbstractDriver {
         await this.GetCoulmnsFromEntity(dbModel.entities, schema);
         await this.GetIndexesFromEntity(dbModel.entities, schema);
         dbModel.entities = await this.GetRelations(dbModel.entities, schema);
+        dbModel.enums = await this.GetEnums(schema);
         await this.DisconnectFromServer();
         this.FindPrimaryColumnsFromIndexes(dbModel);
         return dbModel;
@@ -44,6 +46,9 @@ export abstract class AbstractDriver {
         entities: EntityInfo[],
         schema: string
     ): Promise<EntityInfo[]>;
+    abstract async GetEnums(
+        schema: String
+    ): Promise<EnumInfo[]>;
     abstract async FindPrimaryColumnsFromIndexes(dbModel: DatabaseModel);
     abstract async DisconnectFromServer();
 

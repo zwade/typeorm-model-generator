@@ -11,7 +11,7 @@ export class EntityInfo {
     UniqueImports: string[];
     Indexes: IndexInfo[];
 
-    relationImports(): any {
+    imports(): any {
         var returnString = "";
         var imports: string[] = [];
         this.Columns.forEach(column => {
@@ -19,6 +19,10 @@ export class EntityInfo {
                 if (this.EntityName != relation.relatedTable)
                     imports.push(relation.relatedTable);
             });
+
+            if (column.ts_type && typeof column.ts_type !== "string") {
+                imports.push(column.ts_type.name);
+            }
         });
         this.UniqueImports = imports.filter(function(elem, index, self) {
             return index == self.indexOf(elem);

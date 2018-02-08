@@ -1,6 +1,7 @@
 import { AbstractDriver } from "./AbstractDriver";
 import { ColumnInfo } from "./../models/ColumnInfo";
 import { EntityInfo } from "./../models/EntityInfo";
+import { EnumInfo } from "./../models/EnumInfo";
 import { RelationInfo } from "./../models/RelationInfo";
 import { DatabaseModel } from "./../models/DatabaseModel";
 import { promisify } from "util";
@@ -355,5 +356,8 @@ export class OracleDriver extends AbstractDriver {
     async DropDB(dbName: string) {}
     async CheckIfDBExists(dbName: string): Promise<boolean> {
         return true;
+    }
+    async GetEnums(schema: string): Promise<EnumInfo[]> {
+        return [];
     }
 }

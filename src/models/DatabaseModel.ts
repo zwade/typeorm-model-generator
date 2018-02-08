@@ -1,6 +1,8 @@
 import { EntityInfo } from "./EntityInfo";
+import { EnumInfo } from "./EnumInfo";
 export class DatabaseModel {
     entities: EntityInfo[];
+    enums: EnumInfo[];
     config: {
         cascadeInsert: boolean;
         cascadeUpdate: boolean;

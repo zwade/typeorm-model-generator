@@ -2,6 +2,7 @@ import { AbstractDriver } from "./AbstractDriver";
 import * as MSSQL from "mssql";
 import { ColumnInfo } from "./../models/ColumnInfo";
 import { EntityInfo } from "./../models/EntityInfo";
+import { EnumInfo } from "./../models/EnumInfo";
 import { RelationInfo } from "./../models/RelationInfo";
 import { DatabaseModel } from "./../models/DatabaseModel";
 import * as TomgUtils from "./../Utils";
@@ -588,5 +589,8 @@ order by
             `SELECT name FROM master.sys.databases WHERE name = N'${dbName}' `
         );
         return resp.recordset.length > 0;
+    }
+    async GetEnums(schema: string): Promise<EnumInfo[]> {
+        return [];
     }
 }
