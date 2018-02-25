@@ -236,33 +236,28 @@ class PostgresDriver extends AbstractDriver_1.AbstractDriver {
     GetIndexesFromEntity(entities, schema) {
         return __awaiter(this, void 0, void 0, function* () {
             let response = (yield this.Connection.query(`SELECT
-            c.relname AS tablename,
-            i.relname as indexname,
-            f.attname AS columnname,
-            CASE
-                WHEN ix.indisunique = true THEN '1'
-                ELSE '0'
-            END AS is_unique,
-            CASE
-                WHEN p.contype = 'p' THEN '1'
-                ELSE '0'
-            END AS is_primary_key
-            FROM pg_attribute f
-            JOIN pg_class c ON c.oid = f.attrelid
-            JOIN pg_type t ON t.oid = f.atttypid
-            LEFT JOIN pg_attrdef d ON d.adrelid = c.oid AND d.adnum = f.attnum
-            LEFT JOIN pg_namespace n ON n.oid = c.relnamespace
-            LEFT JOIN pg_constraint p ON p.conrelid = c.oid AND f.attnum = ANY (p.conkey)
-            LEFT JOIN pg_class AS g ON p.confrelid = g.oid
-            LEFT JOIN pg_index AS ix ON f.attnum = ANY(ix.indkey) and c.oid = f.attrelid and c.oid = ix.indrelid
-            LEFT JOIN pg_class AS i ON ix.indexrelid = i.oid
-
-            WHERE c.relkind = 'r'::char
-            AND n.nspname = '${schema}'
-            --AND c.relname = 'nodes'  -- Replace with table name, or Comment this for get all tables
-            AND f.attnum > 0
-            AND i.oid<>0
-            ORDER BY c.relname,f.attname;`)).rows;
+                t.relname AS tablename,
+                i.relname AS indexname,
+                a.attname AS columnname,
+                ix.indisunique AS is_unique,
+                ix.indisprimary AS is_primary_key
+            FROM
+                pg_namespace n,
+                pg_class t,
+                pg_class i,
+                pg_index ix,
+                pg_attribute a
+            WHERE
+                n.nspname = '${schema}'
+                AND t.relnamespace = n.oid
+                AND t.oid = ix.indrelid
+                AND i.oid = ix.indexrelid
+                AND a.attrelid = t.oid
+                AND a.attnum = ANY(ix.indkey)
+                AND t.relkind = 'r'
+            ORDER BY
+                t.relname,
+                i.relname;`)).rows;
             entities.forEach(ent => {
                 response
                     .filter(filterVal => {
