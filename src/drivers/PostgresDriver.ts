@@ -138,7 +138,7 @@ export class PostgresDriver extends AbstractDriver {
                             colInfo.numericScale = resp.numeric_scale;
                             break;
                         case "numeric":
-                            colInfo.ts_type = "string";
+                            colInfo.ts_type = "number";
                             colInfo.sql_type = "numeric";
                             colInfo.numericPrecision = resp.numeric_precision;
                             colInfo.numericScale = resp.numeric_scale;
