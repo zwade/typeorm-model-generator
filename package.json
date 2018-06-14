@@ -36,10 +36,6 @@
     "homepage": "https://github.com/Kononnable/typeorm-model-generator#readme",
     "dependencies": {
         "handlebars": "^4.0.11",
-        "mssql": "^4.0.4",
-        "mysql": "^2.15.0",
-        "oracledb": "^2.0.15",
-        "pg": "^7.4.0",
         "reflect-metadata": "^0.1.10",
         "typeorm": "^0.2.0-alpha.13",
         "change-case": "^3.0.1",
@@ -75,5 +71,11 @@
         "sinon": "^4.1.2",
         "sinon-chai": "^2.14.0",
         "typings": "^2.1.1"
+    },
+    "peerDependencies": {
+        "mssql": "^4.0.4",
+        "mysql": "^2.15.0",
+        "oracledb": "^2.0.15",
+        "pg": "^7.4.0"
     }
 }
