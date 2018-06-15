@@ -94,25 +94,25 @@ var standardPort: number;
 var standardSchema: string = "";
 switch (argv.e) {
     case "mssql":
-        driver = new MssqlDriver();
+        driver = new (require("./drivers/MssqlDriver") as typeof MssqlDriver)();
         standardPort = 1433;
         standardSchema = "dbo";
         break;
     case "postgres":
-        driver = new PostgresDriver();
+        driver = new (require("./drivers/PostgresDriver") as typeof PostgresDriver)();
         standardPort = 5432;
         standardSchema = "public";
         break;
     case "mysql":
-        driver = new MysqlDriver();
+        driver = new (require("./drivers/MysqlDriver") as typeof MysqlDriver)();
         standardPort = 3306;
         break;
     case "mariadb":
-        driver = new MysqlDriver();
+        driver = new (require("./drivers/MysqlDriver") as typeof MysqlDriver)();
         standardPort = 3306;
         break;
     case "oracle":
-        driver = new OracleDriver();
+        driver = new (require("./drivers/OracleDriver") as typeof OracleDriver)();
         standardPort = 1521;
         break;
     default:

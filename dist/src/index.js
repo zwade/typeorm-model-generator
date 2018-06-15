@@ -1,9 +1,5 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const MssqlDriver_1 = require("./drivers/MssqlDriver");
-const PostgresDriver_1 = require("./drivers/PostgresDriver");
-const MysqlDriver_1 = require("./drivers/MysqlDriver");
-const OracleDriver_1 = require("./drivers/OracleDriver");
 const Engine_1 = require("./Engine");
 const Yargs = require("yargs");
 const TomgUtils = require("./Utils");
@@ -89,25 +85,25 @@ var standardPort;
 var standardSchema = "";
 switch (argv.e) {
     case "mssql":
-        driver = new MssqlDriver_1.MssqlDriver();
+        driver = new (require("./drivers/MssqlDriver"))();
         standardPort = 1433;
         standardSchema = "dbo";
         break;
     case "postgres":
-        driver = new PostgresDriver_1.PostgresDriver();
+        driver = new (require("./drivers/PostgresDriver"))();
         standardPort = 5432;
         standardSchema = "public";
         break;
     case "mysql":
-        driver = new MysqlDriver_1.MysqlDriver();
+        driver = new (require("./drivers/MysqlDriver"))();
         standardPort = 3306;
         break;
     case "mariadb":
-        driver = new MysqlDriver_1.MysqlDriver();
+        driver = new (require("./drivers/MysqlDriver"))();
         standardPort = 3306;
         break;
     case "oracle":
-        driver = new OracleDriver_1.OracleDriver();
+        driver = new (require("./drivers/OracleDriver"))();
         standardPort = 1521;
         break;
     default:
