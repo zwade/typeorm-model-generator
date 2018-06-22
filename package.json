@@ -75,7 +75,6 @@
     "peerDependencies": {
         "mssql": "^4.0.4",
         "mysql": "^2.15.0",
-        "oracledb": "^2.0.15",
         "pg": "^7.4.0"
     }
 }
