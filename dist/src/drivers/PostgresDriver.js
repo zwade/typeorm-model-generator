@@ -306,8 +306,8 @@ class PostgresDriver extends AbstractDriver_1.AbstractDriver {
                 con.conname as object_id
                FROM (
                    SELECT
-                     con1.conkey[0] AS parent,
-                     con1.confkey[0] AS child,
+                     con1.conkey[1] AS parent,
+                     con1.confkey[1] AS child,
                      con1.confrelid,
                      con1.conrelid,
                      cl_1.relname,
