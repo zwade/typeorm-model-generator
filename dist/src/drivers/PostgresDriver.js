@@ -306,8 +306,8 @@ class PostgresDriver extends AbstractDriver_1.AbstractDriver {
                 con.conname as object_id
                FROM (
                    SELECT
-                     unnest(con1.conkey) AS parent,
-                     unnest(con1.confkey) AS child,
+                     con1.conkey[0] AS parent,
+                     con1.confkey[0] AS child,
                      con1.confrelid,
                      con1.conrelid,
                      cl_1.relname,
@@ -318,6 +318,7 @@ class PostgresDriver extends AbstractDriver_1.AbstractDriver {
                      pg_constraint con1
                    WHERE
                      con1.contype = 'f'::"char"
+                     AND array_length(con1.conkey, 1) = 1
                      AND cl_1.relnamespace = ns.oid
                      AND con1.conrelid = cl_1.oid
                      and nspname='${schema}'
