@@ -9,7 +9,7 @@ export class EntityInfo {
     Schema: string;
     GenerateConstructor: boolean;
 
-    relationImports(): any {
+    imports(): any {
         var imports: string[] = [];
         this.Columns.forEach(column => {
             column.relations.forEach(relation => {

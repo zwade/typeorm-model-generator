@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 class EntityInfo {
-    relationImports() {
+    imports() {
         var imports = [];
         this.Columns.forEach(column => {
             column.relations.forEach(relation => {
