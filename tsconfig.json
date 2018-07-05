@@ -14,7 +14,10 @@
         "moduleResolution": "node",
         "outDir": "dist",
         "newLine": "LF",
-        "pretty": true
+        "pretty": true,
+        "lib": [
+            "es2017"
+        ]
     },
     "include": [
         "src",

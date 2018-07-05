@@ -1,6 +1,7 @@
 import { AbstractDriver } from "./drivers/AbstractDriver";
 import { MssqlDriver } from "./drivers/MssqlDriver";
 import { PostgresDriver } from "./drivers/PostgresDriver";
+import { SqliteDriver } from "./drivers/SqliteDriver";
 import { MysqlDriver } from "./drivers/MysqlDriver";
 import { MariaDbDriver } from "./drivers/MariaDbDriver";
 import { OracleDriver } from "./drivers/OracleDriver";
@@ -8,49 +9,50 @@ import { Engine } from "./Engine";
 import * as Yargs from "yargs";
 import * as TomgUtils from "./Utils";
 import path = require("path");
+import { AbstractNamingStrategy } from "./AbstractNamingStrategy";
+import { NamingStrategy } from "./NamingStrategy";
 
 var argv = Yargs.usage(
     "Usage: typeorm-model-generator -h <host> -d <database> -p [port] -u <user> -x [password] -e [engine]"
 )
     .option("h", {
         alias: "host",
-        describe: "IP adress/Hostname for database server.",
-        demand: true
+        describe: "IP adress/Hostname for database server",
+        default: "127.0.0.1"
     })
     .option("d", {
         alias: "database",
-        describe: "Database name.",
+        describe: "Database name(or path for sqlite)",
         demand: true
     })
     .option("u", {
         alias: "user",
-        describe: "Username for database server.",
-        demand: true
+        describe: "Username for database server"
     })
     .option("x", {
         alias: "pass",
-        describe: "Password for database server.",
+        describe: "Password for database server",
         default: ""
     })
     .option("p", {
         alias: "port",
-        describe: "Port number for database server."
+        describe: "Port number for database server"
     })
     .option("e", {
         alias: "engine",
-        describe: "Database engine.",
-        choices: ["mssql", "postgres", "mysql", "mariadb"],
+        describe: "Database engine",
+        choices: ["mssql", "postgres", "mysql", "mariadb", "oracle", "sqlite"],
         default: "mssql"
     })
     .option("o", {
         alias: "output",
-        describe: "Where to place generated models.",
+        describe: "Where to place generated models",
         default: path.resolve(process.cwd(), "output")
     })
     .option("s", {
         alias: "schema",
         describe:
-            "Schema name to create model from. Only for mssql and postgres."
+            "Schema name to create model from. Only for mssql and postgres"
     })
     .option("ssl", {
         boolean: true,
@@ -85,59 +87,93 @@ var argv = Yargs.usage(
         default: false
     })
     .option("lazy", {
-        describe: "Use lazy loads between fields with relationsips",
+        describe: "Generate lazy relations",
+        boolean: true,
+        default: false
+    })
+    .option("namingStrategy", {
+        describe: "Use custom naming strategy"
+    })
+    .option("relationIds", {
+        describe: "Generate RelationId fields",
+        boolean: true,
+        default: false
+    })
+    .option("generateConstructor", {
+        describe: "Generate constructor allowing partial initialization",
         default: false
     }).argv;
 
-var driver: AbstractDriver;
-var standardPort: number;
-var standardSchema: string = "";
+let driver: AbstractDriver;
+let standardPort: number;
+let standardSchema: string = "";
+let standardUser: string = "";
 switch (argv.e) {
     case "mssql":
         driver = new (require("./drivers/MssqlDriver").MssqlDriver)();
         standardPort = 1433;
         standardSchema = "dbo";
+        standardUser = "sa";
         break;
     case "postgres":
         driver = new (require("./drivers/PostgresDriver").PostgresDriver)();
         standardPort = 5432;
         standardSchema = "public";
+        standardUser = "postgres";
         break;
     case "mysql":
         driver = new (require("./drivers/MysqlDriver").MysqlDriver)();
         standardPort = 3306;
+        standardUser = "root";
         break;
     case "mariadb":
         driver = new (require("./drivers/MariaDbDriver").MariaDbDriver)();
         standardPort = 3306;
+        standardUser = "root";
         break;
     case "oracle":
         driver = new (require("./drivers/OracleDriver").OracleDriver)();
         standardPort = 1521;
+        standardUser = "SYS";
+        break;
+    case "sqlite":
+        driver = new SqliteDriver();
+        standardPort = 0;
         break;
     default:
-        TomgUtils.LogFatalError("Database engine not recognized.", false);
+        TomgUtils.LogError("Database engine not recognized.", false);
         throw new Error("Database engine not recognized.");
+}
+let namingStrategy: AbstractNamingStrategy;
+if (argv.namingStrategy && argv.namingStrategy != "") {
+    let req = require(argv.namingStrategy);
+    namingStrategy = new req.NamingStrategy();
+} else {
+    namingStrategy = new NamingStrategy();
 }
 
 let engine = new Engine(driver, {
     host: argv.h,
     port: parseInt(argv.p) || standardPort,
-    databaseName: argv.d,
-    user: argv.u,
-    password: argv.x,
+    databaseName: argv.d ? argv.d.toString() : null,
+    user: argv.u ? argv.u.toString() : standardUser,
+    password: argv.x ? argv.x.toString() : null,
     databaseType: argv.e,
-    resultsPath: argv.o,
-    schemaName: argv.s || standardSchema,
+    resultsPath: argv.o ? argv.o.toString() : null,
+    schemaName: argv.s ? argv.s.toString() : standardSchema,
     ssl: argv.ssl,
     noConfigs: argv.noConfig,
     convertCaseFile: argv.cf,
     convertCaseEntity: argv.ce,
     convertCaseProperty: argv.cp,
     removeIdSuffix: argv.ri,
-    lazy: argv.lazy
+    lazy: argv.lazy,
+    constructor: argv.generateConstructor,
+    relationIds: argv.relationIds,
+    namingStrategy: namingStrategy
 });
 
+console.log(TomgUtils.packageVersion());
 console.log(
     `[${new Date().toLocaleTimeString()}] Starting creation of model classes.`
 );

@@ -5,9 +5,8 @@ import fs = require("fs");
 import path = require("path");
 import * as TomgUtils from "./Utils";
 import changeCase = require("change-case");
-/**
- * Engine
- */
+import { AbstractNamingStrategy } from "./AbstractNamingStrategy";
+
 export class Engine {
     constructor(
         private driver: AbstractDriver,
@@ -22,12 +21,14 @@ export class Engine {
             this.Options.user,
             this.Options.password,
             this.Options.schemaName,
-            this.Options.ssl
+            this.Options.ssl,
+            this.Options.namingStrategy,
+            this.Options.relationIds
         );
         if (dbModel.entities.length > 0) {
             this.createModelFromMetadata(dbModel);
         } else {
-            TomgUtils.LogFatalError(
+            TomgUtils.LogError(
                 "Tables not found in selected database. Skipping creation of typeorm model.",
                 false
             );
@@ -41,7 +42,9 @@ export class Engine {
         user: string,
         password: string,
         schemaName: string,
-        ssl: boolean
+        ssl: boolean,
+        namingStrategy: AbstractNamingStrategy,
+        relationIds: boolean
     ): Promise<DatabaseModel> {
         return await this.driver.GetDataFromServer(
             database,
@@ -50,7 +53,9 @@ export class Engine {
             user,
             password,
             schemaName,
-            ssl
+            ssl,
+            namingStrategy,
+            relationIds
         );
     }
     private createModelFromMetadata(databaseModel: DatabaseModel) {
@@ -144,10 +149,24 @@ export class Engine {
         Handlebars.registerHelper("curly", open => {
             return open ? "{" : "}";
         });
-        Handlebars.registerHelper("toEntityName", str => toEntityName(str));
-        Handlebars.registerHelper("array", str => str + "[]");
-        Handlebars.registerHelper("makeLazy", str => this.Options.lazy ? `Promise<${str}>` : str);
-        Handlebars.registerHelper("addLazyParameter", () => this.Options.lazy ? `, { lazy: true }` : "");
+        Handlebars.registerHelper("toEntityName", str => {
+            let retStr = "";
+            switch (this.Options.convertCaseEntity) {
+                case "camel":
+                    retStr = changeCase.camelCase(str);
+                    break;
+                case "pascal":
+                    retStr = changeCase.pascalCase(str);
+                    break;
+                case "none":
+                    retStr = str;
+                    break;
+            }
+            return retStr;
+        });
+        Handlebars.registerHelper("concat", (stra, strb) => {
+            return stra + strb;
+        });
         Handlebars.registerHelper("toFileName", str => {
             let retStr = "";
             switch (this.Options.convertCaseFile) {
@@ -197,6 +216,36 @@ export class Engine {
         Handlebars.registerHelper("toLowerCase", str => {
             return str.toLowerCase();
         });
+        Handlebars.registerHelper("toLazy", str => {
+            if (this.Options.lazy) return `Promise<${str}>`;
+            else return str;
+        });
+        Handlebars.registerHelper({
+            eq: function(v1, v2) {
+                return v1 === v2;
+            },
+            ne: function(v1, v2) {
+                return v1 !== v2;
+            },
+            lt: function(v1, v2) {
+                return v1 < v2;
+            },
+            gt: function(v1, v2) {
+                return v1 > v2;
+            },
+            lte: function(v1, v2) {
+                return v1 <= v2;
+            },
+            gte: function(v1, v2) {
+                return v1 >= v2;
+            },
+            and: function(v1, v2) {
+                return v1 && v2;
+            },
+            or: function(v1, v2) {
+                return v1 || v2;
+            }
+        });
     }
 
     //TODO:Move to mustache template file
@@ -228,7 +277,7 @@ export class Engine {
     "username": "${this.Options.user}",
     "password": "${this.Options.password}",
     "database": "${this.Options.databaseName}",
-    "synchronize": false
+    "synchronize": false,
     "entities": [
       "entities/*.js"
     ]
@@ -276,4 +325,7 @@ export interface EngineOptions {
     convertCaseProperty: "pascal" | "camel" | "none";
     removeIdSuffix: boolean;
     lazy: boolean;
+    constructor: boolean;
+    namingStrategy: AbstractNamingStrategy;
+    relationIds: boolean;
 }

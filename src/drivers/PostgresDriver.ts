@@ -1,56 +1,22 @@
 import { AbstractDriver } from "./AbstractDriver";
 import * as PG from "pg";
-import { ColumnInfo } from "./../models/ColumnInfo";
-import { EntityInfo } from "./../models/EntityInfo";
-import { EnumInfo } from "./../models/EnumInfo";
-import { RelationInfo } from "./../models/RelationInfo";
-import { DatabaseModel } from "./../models/DatabaseModel";
-import * as TomgUtils from "./../Utils";
-/**
- * PostgresDriver
- */
+import { ColumnInfo } from "../models/ColumnInfo";
+import { EntityInfo } from "../models/EntityInfo";
+import * as TomgUtils from "../Utils";
+
 export class PostgresDriver extends AbstractDriver {
     private Connection: PG.Client;
 
-    FindPrimaryColumnsFromIndexes(dbModel: DatabaseModel) {
-        dbModel.entities.forEach(entity => {
-            let primaryIndex = entity.Indexes.find(v => v.isPrimaryKey);
-            if (!primaryIndex) {
-                TomgUtils.LogFatalError(
-                    `Table ${entity.EntityName} has no PK.`,
-                    false
-                );
-                return;
-            }
-            entity.Columns.forEach(col => {
-                if (
-                    primaryIndex!.columns.some(
-                        cIndex => cIndex.name == col.name
-                    )
-                )
-                    col.isPrimary = true;
-            });
-        });
-    }
-
-    async GetAllTables(schema: string): Promise<EntityInfo[]> {
+    GetAllTablesQuery = async (schema: string) => {
         let response: {
-            table_schema: string;
-            table_name: string;
+            TABLE_SCHEMA: string;
+            TABLE_NAME: string;
         }[] = (await this.Connection.query(
-            `SELECT table_schema,table_name FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE='BASE TABLE' AND table_schema = '${schema}' `
+            `SELECT table_schema as "TABLE_SCHEMA",table_name as "TABLE_NAME" FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE='BASE TABLE' AND table_schema in (${schema}) `
         )).rows;
+        return response;
+    };
 
-        let ret: EntityInfo[] = <EntityInfo[]>[];
-        response.forEach(val => {
-            let ent: EntityInfo = new EntityInfo();
-            ent.EntityName = val.table_name;
-            ent.Columns = <ColumnInfo[]>[];
-            ent.Indexes = <IndexInfo[]>[];
-            ret.push(ent);
-        });
-        return ret;
-    }
     async GetCoulmnsFromEntity(
         entities: EntityInfo[],
         schema: string
@@ -65,14 +31,22 @@ export class PostgresDriver extends AbstractDriver {
             numeric_precision: number;
             numeric_scale: number;
             isidentity: string;
+            isunique: number;
         }[] = (await this.Connection
             .query(`SELECT table_name,column_name,column_default,is_nullable,
-            udt_name,character_maximum_length,numeric_precision,numeric_scale
-            --,COLUMNPROPERTY(object_id(table_name), column_name, 'isidentity') isidentity
-           , case when column_default LIKE 'nextval%' then 'YES' else 'NO' end isidentity
-            FROM INFORMATION_SCHEMA.COLUMNS where table_schema ='${schema}'`))
+            udt_name,character_maximum_length,numeric_precision,numeric_scale,
+            case when column_default LIKE 'nextval%' then 'YES' else 'NO' end isidentity,
+			(SELECT count(*)
+    FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS tc
+        inner join INFORMATION_SCHEMA.CONSTRAINT_COLUMN_USAGE cu
+            on cu.CONSTRAINT_NAME = tc.CONSTRAINT_NAME
+    where
+        tc.CONSTRAINT_TYPE = 'UNIQUE'
+        and tc.TABLE_NAME = c.TABLE_NAME
+        and cu.COLUMN_NAME = c.COLUMN_NAME
+        and tc.TABLE_SCHEMA=c.TABLE_SCHEMA) IsUnique
+            FROM INFORMATION_SCHEMA.COLUMNS c where table_schema in (${schema})`))
             .rows;
-
         entities.forEach(ent => {
             response
                 .filter(filterVal => {
@@ -80,13 +54,13 @@ export class PostgresDriver extends AbstractDriver {
                 })
                 .forEach(resp => {
                     let colInfo: ColumnInfo = new ColumnInfo();
-                    colInfo.name = resp.column_name;
-                    colInfo.is_nullable =
-                        resp.is_nullable == "YES" ? true : false;
-                    colInfo.is_generated =
-                        resp.isidentity == "YES" ? true : false;
+                    colInfo.tsName = resp.column_name;
+                    colInfo.sqlName = resp.column_name;
+                    colInfo.is_nullable = resp.is_nullable == "YES";
+                    colInfo.is_generated = resp.isidentity == "YES";
+                    colInfo.is_unique = resp.isunique == 1;
                     colInfo.default = colInfo.is_generated
-                        ? ""
+                        ? null
                         : resp.column_default;
                     switch (resp.udt_name) {
                         case "int4":
@@ -96,7 +70,7 @@ export class PostgresDriver extends AbstractDriver {
                         case "varchar":
                             colInfo.ts_type = "string";
                             colInfo.sql_type = "varchar";
-                            colInfo.char_max_lenght =
+                            colInfo.lenght =
                                 resp.character_maximum_length > 0
                                     ? resp.character_maximum_length
                                     : null;
@@ -245,7 +219,34 @@ export class PostgresDriver extends AbstractDriver {
                             colInfo.sql_type = "varchar";
                             break;
                     }
-
+                    if (
+                        this.ColumnTypesWithPrecision.some(
+                            v => v == colInfo.sql_type
+                        )
+                    ) {
+                        colInfo.numericPrecision = resp.numeric_precision;
+                        colInfo.numericScale = resp.numeric_scale;
+                    }
+                    if (
+                        this.ColumnTypesWithLength.some(
+                            v => v == colInfo.sql_type
+                        )
+                    ) {
+                        colInfo.lenght =
+                            resp.character_maximum_length > 0
+                                ? resp.character_maximum_length
+                                : null;
+                    }
+                    if (
+                        this.ColumnTypesWithWidth.some(
+                            v => v == colInfo.sql_type
+                        )
+                    ) {
+                        colInfo.width =
+                            resp.character_maximum_length > 0
+                                ? resp.character_maximum_length
+                                : null;
+                    }
                     if (colInfo.sql_type) ent.Columns.push(colInfo);
                 });
         });
@@ -260,30 +261,31 @@ export class PostgresDriver extends AbstractDriver {
             indexname: string;
             columnname: string;
             is_unique: number;
-            is_primary_key: number; //, is_descending_key: number//, is_included_column: number
+            is_primary_key: number;
         }[] = (await this.Connection.query(`SELECT
-                t.relname AS tablename,
-                i.relname AS indexname,
-                a.attname AS columnname,
-                ix.indisunique AS is_unique,
-                ix.indisprimary AS is_primary_key
-            FROM
-                pg_namespace n,
-                pg_class t,
-                pg_class i,
-                pg_index ix,
-                pg_attribute a
-            WHERE
-                n.nspname = '${schema}'
-                AND t.relnamespace = n.oid
-                AND t.oid = ix.indrelid
-                AND i.oid = ix.indexrelid
-                AND a.attrelid = t.oid
-                AND a.attnum = ANY(ix.indkey)
-                AND t.relkind = 'r'
-            ORDER BY
-                t.relname,
-                i.relname;`)).rows;
+        c.relname AS tablename,
+        i.relname as indexname,
+        f.attname AS columnname,
+        CASE
+            WHEN ix.indisunique = true THEN '1'
+            ELSE '0'
+        END AS is_unique,
+        CASE
+            WHEN ix.indisprimary='true' THEN '1'
+            ELSE '0'
+        END AS is_primary_key
+        FROM pg_attribute f
+        JOIN pg_class c ON c.oid = f.attrelid
+        JOIN pg_type t ON t.oid = f.atttypid
+        LEFT JOIN pg_attrdef d ON d.adrelid = c.oid AND d.adnum = f.attnum
+        LEFT JOIN pg_namespace n ON n.oid = c.relnamespace
+        LEFT JOIN pg_index AS ix ON f.attnum = ANY(ix.indkey) and c.oid = f.attrelid and c.oid = ix.indrelid
+        LEFT JOIN pg_class AS i ON ix.indexrelid = i.oid
+        WHERE c.relkind = 'r'::char
+        AND n.nspname in (${schema})
+        AND f.attnum > 0
+        AND i.oid<>0
+        ORDER BY c.relname,f.attname;`)).rows;
         entities.forEach(ent => {
             response
                 .filter(filterVal => {
@@ -303,17 +305,14 @@ export class PostgresDriver extends AbstractDriver {
                     } else {
                         indexInfo.columns = <IndexColumnInfo[]>[];
                         indexInfo.name = resp.indexname;
-                        indexInfo.isUnique = resp.is_unique == 1 ? true : false;
-                        indexInfo.isPrimaryKey =
-                            resp.is_primary_key == 1 ? true : false;
+                        indexInfo.isUnique = resp.is_unique == 1;
+                        indexInfo.isPrimaryKey = resp.is_primary_key == 1;
                         ent.Indexes.push(indexInfo);
                     }
                     indexColumnInfo.name = resp.columnname;
                     if (resp.is_primary_key == 0) {
                         indexInfo.isPrimaryKey = false;
                     }
-                    // indexColumnInfo.isIncludedColumn = resp.is_included_column == 1 ? true : false;
-                    //indexColumnInfo.isDescending = resp.is_descending_key == 1 ? true : false;
                     indexInfo.columns.push(indexColumnInfo);
                 });
         });
@@ -339,13 +338,13 @@ export class PostgresDriver extends AbstractDriver {
                  att2.attname AS foreignkeycolumn,
               cl.relname AS tablereferenced,
               att.attname AS foreignkeycolumnreferenced,
-               update_rule as ondelete,
-               delete_rule as onupdate,
+              delete_rule as ondelete,
+              update_rule as onupdate,
                 con.conname as object_id
                FROM (
                    SELECT
-                     con1.conkey[1] AS parent,
-                     con1.confkey[1] AS child,
+                     unnest(con1.conkey) AS parent,
+                     unnest(con1.confkey) AS child,
                      con1.confrelid,
                      con1.conrelid,
                      cl_1.relname,
@@ -356,10 +355,9 @@ export class PostgresDriver extends AbstractDriver {
                      pg_constraint con1
                    WHERE
                      con1.contype = 'f'::"char"
-                     AND array_length(con1.conkey, 1) = 1
                      AND cl_1.relnamespace = ns.oid
                      AND con1.conrelid = cl_1.oid
-                     and nspname='${schema}'
+                     and nspname in (${schema})
               ) con,
                 pg_attribute att,
                 pg_class cl,
@@ -381,8 +379,10 @@ export class PostgresDriver extends AbstractDriver {
                 rels = <RelationTempInfo>{};
                 rels.ownerColumnsNames = [];
                 rels.referencedColumnsNames = [];
-                rels.actionOnDelete = resp.ondelete;
-                rels.actionOnUpdate = resp.onupdate;
+                rels.actionOnDelete =
+                    resp.ondelete == "NO ACTION" ? null : resp.ondelete;
+                rels.actionOnUpdate =
+                    resp.onupdate == "NO ACTION" ? null : resp.onupdate;
                 rels.object_id = resp.object_id;
                 rels.ownerTable = resp.tablewithforeignkey;
                 rels.referencedTable = resp.tablereferenced;
@@ -391,169 +391,20 @@ export class PostgresDriver extends AbstractDriver {
             rels.ownerColumnsNames.push(resp.foreignkeycolumn);
             rels.referencedColumnsNames.push(resp.foreignkeycolumnreferenced);
         });
-        relationsTemp.forEach(relationTmp => {
-            let ownerEntity = entities.find(entitity => {
-                return entitity.EntityName == relationTmp.ownerTable;
-            });
-            if (!ownerEntity) {
-                TomgUtils.LogFatalError(
-                    `Relation between tables ${relationTmp.ownerTable} and ${
-                        relationTmp.referencedTable
-                    } didn't found entity model ${relationTmp.ownerTable}.`
-                );
-                return;
-            }
-            let referencedEntity = entities.find(entitity => {
-                return entitity.EntityName == relationTmp.referencedTable;
-            });
-            if (!referencedEntity) {
-                TomgUtils.LogFatalError(
-                    `Relation between tables ${relationTmp.ownerTable} and ${
-                        relationTmp.referencedTable
-                    } didn't found entity model ${relationTmp.referencedTable}.`
-                );
-                return;
-            }
-            let ownerColumn = ownerEntity.Columns.find(column => {
-                return column.name == relationTmp.ownerColumnsNames[0];
-            });
-            if (!ownerColumn) {
-                TomgUtils.LogFatalError(
-                    `Relation between tables ${relationTmp.ownerTable} and ${
-                        relationTmp.referencedTable
-                    } didn't found entity column ${
-                        relationTmp.ownerTable
-                    }.${ownerColumn}.`
-                );
-                return;
-            }
-            let relatedColumn = referencedEntity.Columns.find(column => {
-                return column.name == relationTmp.referencedColumnsNames[0];
-            });
-            if (!relatedColumn) {
-                TomgUtils.LogFatalError(
-                    `Relation between tables ${relationTmp.ownerTable} and ${
-                        relationTmp.referencedTable
-                    } didn't found entity column ${
-                        relationTmp.referencedTable
-                    }.${relatedColumn}.`
-                );
-                return;
-            }
-            let ownColumn: ColumnInfo = ownerColumn;
-            let isOneToMany: boolean;
-            isOneToMany = false;
-            let index = ownerEntity.Indexes.find(index => {
-                return (
-                    index.isUnique &&
-                    index.columns.some(col => {
-                        return col.name == ownerColumn!.name;
-                    })
-                );
-            });
-            if (!index) {
-                isOneToMany = true;
-            } else {
-                isOneToMany = false;
-            }
-            let ownerRelation = new RelationInfo();
-            let columnName =
-                ownerEntity.EntityName.toLowerCase() + (isOneToMany ? "s" : "");
-            if (
-                referencedEntity.Columns.filter(filterVal => {
-                    return filterVal.name == columnName;
-                }).length > 0
-            ) {
-                for (let i = 2; i <= ownerEntity.Columns.length; i++) {
-                    columnName =
-                        ownerEntity.EntityName.toLowerCase() +
-                        (isOneToMany ? "s" : "") +
-                        i.toString();
-                    if (
-                        referencedEntity.Columns.filter(filterVal => {
-                            return filterVal.name == columnName;
-                        }).length == 0
-                    )
-                        break;
-                }
-            }
-            ownerRelation.actionOnDelete = relationTmp.actionOnDelete;
-            ownerRelation.actionOnUpdate = relationTmp.actionOnUpdate;
-            ownerRelation.isOwner = true;
-            ownerRelation.relatedColumn = relatedColumn.name.toLowerCase();
-            ownerRelation.relatedTable = relationTmp.referencedTable;
-            ownerRelation.ownerTable = relationTmp.ownerTable;
-            ownerRelation.ownerColumn = columnName;
-            ownerRelation.relationType = isOneToMany ? "ManyToOne" : "OneToOne";
-            ownerColumn.relations.push(ownerRelation);
-            if (isOneToMany) {
-                let col = new ColumnInfo();
-                col.name = columnName;
-                let referencedRelation = new RelationInfo();
-                col.relations.push(referencedRelation);
-                referencedRelation.actionondelete = relationTmp.actionOnDelete;
-                referencedRelation.actiononupdate = relationTmp.actionOnUpdate;
-                referencedRelation.isOwner = false;
-                referencedRelation.relatedColumn = ownerColumn.name;
-                referencedRelation.relatedTable = relationTmp.ownerTable;
-                referencedRelation.ownerTable = relationTmp.referencedTable;
-                referencedRelation.ownerColumn = relatedColumn.name.toLowerCase();
-                referencedRelation.relationType = "OneToMany";
-                referencedEntity.Columns.push(col);
-            } else {
-                let col = new ColumnInfo();
-                col.name = columnName;
-                let referencedRelation = new RelationInfo();
-                col.relations.push(referencedRelation);
-                referencedRelation.actionondelete = relationTmp.actionOnDelete;
-                referencedRelation.actiononupdate = relationTmp.actionOnUpdate;
-                referencedRelation.isOwner = false;
-                referencedRelation.relatedColumn = ownerColumn.name;
-                referencedRelation.relatedTable = relationTmp.ownerTable;
-                referencedRelation.ownerTable = relationTmp.referencedTable;
-                referencedRelation.ownerColumn = relatedColumn.name.toLowerCase();
-                referencedRelation.relationType = "OneToOne";
-
-                referencedEntity.Columns.push(col);
-            }
-        });
+        entities = this.GetRelationsFromRelationTempInfo(
+            relationsTemp,
+            entities
+        );
         return entities;
-    }
-    async GetEnums(schema: string): Promise<EnumInfo[]> {
-        let enumsResponse: {
-            enum_name: string;
-            enum_value: string;
-        }[] = (await this.Connection.query(`
-            SELECT t.typname AS enum_name,
-                e.enumlabel AS enum_value
-            FROM pg_type t
-                JOIN pg_enum e ON t.oid = e.enumtypid
-                JOIN pg_catalog.pg_namespace n ON n.oid = t.typnamespace
-            WHERE n.nspname = '${schema}'`))
-                .rows;
-
-        let enums =
-            enumsResponse
-                .reduce((enums, { enum_name, enum_value }) => {
-                    if (!enums.has(enum_name)) {
-                        enums.set(enum_name, []);
-                    }
-
-                    enums.get(enum_name)!.push(enum_value);
-                    return enums;
-                }, new Map<string, string[]>());
-
-        return Array.from(enums.keys()).map((name) => ({ name, values: enums.get(name)! }));
     }
     async DisconnectFromServer() {
         if (this.Connection) {
             let promise = new Promise<boolean>((resolve, reject) => {
                 this.Connection.end(err => {
                     if (!err) {
-                        //Connection successfull
                         resolve(true);
                     } else {
-                        TomgUtils.LogFatalError(
+                        TomgUtils.LogError(
                             "Error connecting to Postgres Server.",
                             false,
                             err.message
@@ -586,10 +437,9 @@ export class PostgresDriver extends AbstractDriver {
         let promise = new Promise<boolean>((resolve, reject) => {
             this.Connection.connect(err => {
                 if (!err) {
-                    //Connection successfull
                     resolve(true);
                 } else {
-                    TomgUtils.LogFatalError(
+                    TomgUtils.LogError(
                         "Error connecting to Postgres Server.",
                         false,
                         err.message
@@ -603,13 +453,13 @@ export class PostgresDriver extends AbstractDriver {
     }
 
     async CreateDB(dbName: string) {
-        let resp = await this.Connection.query(`CREATE DATABASE ${dbName}; `);
+        await this.Connection.query(`CREATE DATABASE ${dbName}; `);
     }
     async UseDB(dbName: string) {
-        let resp = await this.Connection.query(`USE ${dbName}; `);
+        await this.Connection.query(`USE ${dbName}; `);
     }
     async DropDB(dbName: string) {
-        let resp = await this.Connection.query(`DROP DATABASE ${dbName}; `);
+        await this.Connection.query(`DROP DATABASE ${dbName}; `);
     }
     async CheckIfDBExists(dbName: string): Promise<boolean> {
         let resp = await this.Connection.query(

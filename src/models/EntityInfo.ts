@@ -1,18 +1,15 @@
 import { ColumnInfo } from "./ColumnInfo";
-import * as Handlebars from "handlebars";
 
-/**
- * EntityInfo
- */
 export class EntityInfo {
     EntityName: string;
     Columns: ColumnInfo[];
     Imports: string[];
     UniqueImports: string[];
     Indexes: IndexInfo[];
+    Schema: string;
+    GenerateConstructor: boolean;
 
-    imports(): any {
-        var returnString = "";
+    relationImports(): any {
         var imports: string[] = [];
         this.Columns.forEach(column => {
             column.relations.forEach(relation => {

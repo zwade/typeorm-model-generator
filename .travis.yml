@@ -1,36 +1,54 @@
 language: node_js
 node_js:
-    - stable
-    - 8
-    - 6
+- stable
+- 8
+- 6
 sudo: required
 services:
-    - docker
+- docker
 env:
-    matrix:
-        - >-
-            POSTGRES_Skip=0 POSTGRES_Host=localhost POSTGRES_Port=5432
-            POSTGRES_Username=postgres POSTGRES_Password=!Passw0rd
-            POSTGRES_Database=typeorm_mg POSTGRES_SSL=0  MYSQL_Skip=0
-            MYSQL_Host=localhost MYSQL_Port=3306 MYSQL_Username=root
-            MYSQL_Password=!Passw0rd MYSQL_Database=typeorm_mg MYSQL_SSL=1
-            MARIADB_Skip=0 MARIADB_Host=localhost MARIADB_Port=3307
-            MARIADB_Username=root MARIADB_Password=!Passw0rd
-            MARIADB_Database=typeorm_mg MARIADB_SSL=0
-    global:
-        secure: >-
-            Xj6wO8aghAhi6nvBI/HTtW9mIq9xfigIQfCC7ZkgAcqS4Oe3ba+7A5pCJq6Fxndadc6Bg1bZ3BGCH3Upf/Yv3zCFybsk43LwwXPJoG9gCrva/me7Sd+ws30EcD2dsKbvjZqNYai/XdrhzJY+KlxWvS/g3N/puBNffcU5hteo1zllxakQIAiavJ64D4g+Th8LSytmb2qDDToSsCxXkzNSutaKgZSf6T8QCWzcl0NCZkl69s9kX7L5335HVBD9lR/EKFC4wqHQjryCDRAyNRvItZRNlTPqgOI8lvcTsH9zKozDwEz7h/zcLebbY/+YTsLB5pb2sa62tkQE0x24TG7bLxujQShEQZU8itkRSV+w6+0JpBHQPlSUppkQJBNGKao7GaO/Eix4mSyvHkeECmTWDtEpBGWERYLqCKGe2Nj3BfcA2Ue6pjz9CX8wnrCbx53j6be3M/g/gcx7fbJbX3P95yc1CWAaR+tJKlP38rTcyo+o+Db1Ft0pzRJyZGmkGGPnCj6LxWYSmVqumLYDyqAMBDcQYuVwaKaTsJtU/2OBb3+zjKmWivV+19SXBqILvFbLv9IYLavpMr9OAwDGcJu0+mF+VCjGkZTlBxWJ53PmCoIJ6Qx/5o67LsCYL4L/hugNETlOEEKwe/k1mBraYWB0jI3mBUCV0d8J5P+ZQhwIZo4=
+  matrix:
+  - POSTGRES_Skip=1 POSTGRES_Host=localhost POSTGRES_Port=5432 POSTGRES_Username=postgres
+    POSTGRES_Password=!Passw0rd POSTGRES_Database=typeorm_mg POSTGRES_SSL=0  MYSQL_Skip=0
+    MYSQL_Host=localhost MYSQL_Port=3306 MYSQL_Username=root MYSQL_Password=!Passw0rd
+    MYSQL_Database=typeorm_mg MYSQL_SSL=1 MARIADB_Skip=0 MARIADB_Host=localhost MARIADB_Port=3307
+    MARIADB_Username=root MARIADB_Password=!Passw0rd MARIADB_Database=typeorm_mg MARIADB_SSL=0
+    MSSQL_Skip=0 MSSQL_Host=localhost MSSQL_Port=1433 MSSQL_Username=sa MSSQL_Password=!Passw0rd
+    MSSQL_Database=typeorm_mg MSSQL_SSL=0
+    ORACLE_Skip=0
+    ORACLE_Host=localhost
+    ORACLE_Port=1521
+    ORACLE_SSL=0
+    ORACLE_UsernameSys=sys
+    ORACLE_PasswordSys=Oradoc_db1
+    ORACLE_Database=orclpdb1.localdomain
+    ORACLE_Username=typeorm_mg
+    ORACLE_Password=Passw0rd
+    SQLITE_Skip=0
+    SQLITE_Database=/tmp/sqlitedb.db
 before_install:
-    - sudo service mysql stop
-    - sudo service postgresql stop
-    - docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD"
-    - docker-compose up -d
-    - npm install -g npm@5
-    - npm install -g greenkeeper-lockfile@1
+- sudo service mysql stop
+- sudo service postgresql stop
+- if [ -z "$DOCKER_USERNAME" ]; then echo "DOCKER_USERNAME is unset"; else echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin; fi
+- if [ -z "$DOCKER_USERNAME" ]; then mv docker-compose-without-login.yml docker-compose.yml; fi
+- if [ -z "$DOCKER_USERNAME" ]; then export ORACLE_Skip=1; fi
+- docker-compose up -d
+- npm install -g npm@5
+- npm install -g greenkeeper-lockfile@1
+- mkdir /opt/oracle
+install:
+- case $TRAVIS_BRANCH in greenkeeper*) npm i;; *) npm ci;; esac;
 before_script:
-    - greenkeeper-lockfile-update
-    - npm run typings-install
-    - npm link typescript
-    - tsc
+- if [ -n "$DOCKER_USERNAME" ]; then npm i oracledb --no-save; docker cp typeorm-mg-oracle-client:/usr/lib/oracle/12.2/client64/lib /opt/oracle/instantclient_12_2; fi
+- export LD_LIBRARY_PATH=/opt/oracle/instantclient_12_2:$LD_LIBRARY_PATH
+- greenkeeper-lockfile-update
+- typings install
+- npm link typescript
+- tsc
+- sleep 180
+- docker logs typeorm-mg-postgres
+
 after_script:
-    - greenkeeper-lockfile-upload
+- greenkeeper-lockfile-upload
+dd:
+  secure: lONUbDz2a1LWId+Z2tTaxajK7MilX/XbQ875FYD6EE09DQ0xcoPdq2/KW5/pxuN1tz4QzTG7izMwra3XWtkBySxqFwJDUOibsgYVgn+EMMuPWNMNnQgXqTTmHbtbm1L1aSMHu4bCu4cJkJBX6503R0Kv4Hbdr2LFnSUI/9KqrevA1cVyksN71BlNBdRtvnHInwB5wNNvGULSLT+DR6qGytLGjq4ZF+pW7dH3A1LNGfDY4ivGPHt9eAWGHcVuESmudO1ADmf6XTZAJVdKqDy5eJguK48XyAqRmTc1vBxDJmCNDaU/mV6fkUoEkCjn9XfG5nJLOKviycc1j/OCuuWuqojmTlRInPGV8GDT8lNivwqLBMzvKoKgSQQROEVus4xzo64M808dFbUS30et3++O589X/7P9Wjmt+6HawcEsSq5TQfEutyB+tM9OwedTkB5Fwwmymuqx23zCAJ2orP7WoIG/ApmnKu6LmpoM340UxxSGkurztQP1OqFrf4u8kDVp9/xzqnd7qSfEd8iKvvb1bOykWGxx6dhyThCdSNyT5GQL3aub3LV6g0UB37lbhB+BVSrOAhN0r1cIWT2wr2mRxwoepObmrcNQ+AOUUXE/RcONsiEQr+STsEIjJb7bTANljRYMKpiPdsAdhvDaUZRyu8KBArTCDPotanzwQFERcw8=

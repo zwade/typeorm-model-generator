@@ -20,29 +20,30 @@ export class Post {
 
     // post has relation with category, however inverse relation is not set (category does not have relation with post set)
     @OneToOne(type => PostCategory, {
-        cascade: true,
+        // cascade: true,
         onDelete: 'CASCADE'
     })
     @JoinColumn()
-    @Index({ unique: true })
+    // @Index({ unique: true })
     category: PostCategory;
 
     // post has relation with details. cascade inserts here means if new PostDetails instance will be set to this
     // relation it will be inserted automatically to the db when you save this Post entity
     @OneToOne(type => PostDetails, details => details.post, {
-        cascade: true
+         onDelete: 'CASCADE'
+         // cascade: true
     })
     @JoinColumn()
-    @Index({ unique: true })
+    // @Index({ unique: true })
     details: PostDetails;
 
     // post has relation with details. cascade update here means if new PostDetail instance will be set to this relation
     // it will be inserted automatically to the db when you save this Post entity
     @OneToOne(type => PostImage, image => image.post, {
-        cascade: true,
+        // cascade: true,
     })
     @JoinColumn()
-    @Index({ unique: true })
+    // @Index({ unique: true })
     image: PostImage;
 
     // post has relation with details. cascade update here means if new PostDetail instance will be set to this relation
@@ -51,22 +52,22 @@ export class Post {
         onDelete: 'CASCADE'
     })
     @JoinColumn()
-    @Index({ unique: true })
+    // @Index({ unique: true })
     metadata: PostMetadata | null;
 
     // post has relation with details. full cascades here
     @OneToOne(type => PostInformation, information => information.post, {
-        cascade: true,
-        onDelete: 'CASCADE'
+        // cascade: true,
+         onDelete: 'CASCADE'
     })
     @JoinColumn()
-    @Index({ unique: true })
+    // @Index({ unique: true })
     information: PostInformation;
 
     // post has relation with details. not cascades here. means cannot be persisted, updated or removed
     @OneToOne(type => PostAuthor, author => author.post)
     @JoinColumn()
-    @Index({ unique: true })
+    // @Index({ unique: true })
     author: PostAuthor;
 
 }

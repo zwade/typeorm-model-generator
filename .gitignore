@@ -11,3 +11,4 @@ output/**/*.*
 coverage/
 .env
 *.tgz
+!gulpfile.js

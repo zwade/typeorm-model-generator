@@ -11,7 +11,8 @@ Suported db engines:
 * PostgreSQL
 * MySQL
 * MariaDB
-
+* Oracle Database
+* SQLite
 
 
 ## Installation
@@ -20,6 +21,9 @@ To install module globally simply type `npm i -g typeorm-model-generator` in you
 ### Npx way
 Thanks to npx you can use npm modules without polluting global installs. So nothing to do here :)
 >To use `npx` you need to use npm at version at least 5.2.0. Try updating your npm by `npm i -g npm`
+### Database drivers
+All database drivers except oracle are installed by default. To use typeorm-model-generator with oracle databese you need to install driver with `npm i oracledb` and configure [oracle install client](http://www.oracle.com/technetwork/database/database-technologies/instant-client/overview/index.html) on your machine.
+
 ## Usage
 
 ```shell
@@ -40,6 +44,19 @@ Options:
                  [default: "/Users/bluepichu/git/zensors/typeorm-models/output"]
   -s, --schema           Schema name to create model from. Only for mssql and
                          postgres.
+  -h, --host             IP adress/Hostname for database server
+                                                          [default: "127.0.0.1"]
+  -d, --database         Database name(or path for sqlite)            [required]
+  -u, --user             Username for database server
+  -x, --pass             Password for database server              [default: ""]
+  -p, --port             Port number for database server
+  -e, --engine           Database engine
+          [choices: "mssql", "postgres", "mysql", "mariadb", "oracle", "sqlite"]
+                                                              [default: "mssql"]
+  -o, --output           Where to place generated models
+                            [default: "Z:\Repos\typeorm-model-generator\output"]
+  -s, --schema           Schema name to create model from. Only for mssql and
+                         postgres
   --ssl                                               [boolean] [default: false]
   --noConfig             Doesn't create tsconfig.json and ormconfig.json
                                                       [boolean] [default: false]
@@ -50,8 +67,12 @@ Options:
   --cp, --case-property  Convert property names to specified case
                           [choices: "pascal", "camel", "none"] [default: "none"]
   --ri, --remove-id      Remove _id suffix from fields          [default: false]
-  --lazy                 Use lazy loads between fields with relationsips
-                                                                [default: false]
+  --lazy                 Generate lazy relations      [boolean] [default: false]
+  --namingStrategy       Use custom naming strategy
+  --relationIds          Generate RelationId fields   [boolean] [default: false]
+  --generateConstructor  Generate constructor allowing partial initialization
+                                                      [boolean] [default: false]
+>>>>>>> f5eac4e0640b0f81081bc1a1c177741fe99580fb
 ```
 ### Examples
 
@@ -73,3 +94,16 @@ Options:
       ```
       npx typeorm-model-generator -h localhost -d postgres -u postgres -x !Passw0rd -e postgres -o . -s public --ssl
       ````
+* Creating model from SQLite database
+   * Global module
+      ```
+      typeorm-model-generator -d "Z:\sqlite.db" -e sqlite -o .
+      ````
+   * Npx Way
+      ```
+      npx typeorm-model-generator -d "Z:\sqlite.db" -e sqlite -o .
+      ````
+## Naming strategy
+If you want to generate custom names for properties in generated entities you need to use custom naming strategy. You need to create your own version of [NamingStrategy](https://github.com/Kononnable/typeorm-model-generator/blob/master/src/NamingStrategy.ts) and pass it as command parameter.
+
+```typeorm-model-generator -d typeorm_mg --namingStrategy=./NamingStrategy -e sqlite -db /tmp/sqliteto.db```

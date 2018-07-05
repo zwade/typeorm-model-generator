@@ -1,37 +1,34 @@
 require('dotenv').config()
 import "reflect-metadata";
-import { createConnection, ConnectionOptions, Connection } from "typeorm";
 import fs = require('fs-extra');
 import path = require('path')
 import { expect } from "chai";
-import * as Sinon from 'sinon'
 import { EntityFileToJson } from "../utils/EntityFileToJson";
 var chai = require('chai');
 var chaiSubset = require('chai-subset');
 import * as ts from "typescript";
 import * as GTU from "../utils/GeneralTestUtils"
-import { Engine } from "./../../src/Engine";
+import { Engine } from "../../src/Engine";
 
 chai.use(chaiSubset);
 
-
 describe("Platform specyfic types", async function () {
-    this.timeout(20000)
+    this.timeout(30000)
     this.slow(5000)//compiling created models takes time
 
     let dbDrivers: string[] = []
+    if (process.env.SQLITE_Skip == '0') dbDrivers.push('sqlite')
     if (process.env.POSTGRES_Skip == '0') dbDrivers.push('postgres')
     if (process.env.MYSQL_Skip == '0') dbDrivers.push('mysql')
     if (process.env.MARIADB_Skip == '0') dbDrivers.push('mariadb')
     if (process.env.MSSQL_Skip == '0') dbDrivers.push('mssql')
-
+    if (process.env.ORACLE_Skip == '0') dbDrivers.push('oracle')
 
     let examplesPathJS = path.resolve(process.cwd(), 'dist/test/integration/entityTypes')
     let examplesPathTS = path.resolve(process.cwd(), 'test/integration/entityTypes')
     let files = fs.readdirSync(examplesPathTS)
 
     for (let dbDriver of dbDrivers) {
-
         for (let folder of files) {
             if (dbDriver == folder) {
                 it(dbDriver, async function () {
@@ -43,8 +40,8 @@ describe("Platform specyfic types", async function () {
 
                     let engine: Engine;
                     switch (dbDriver) {
-                        case 'mssql':
-                            engine = await GTU.createMSSQLModels(filesOrgPathJS, resultsPath)
+                        case 'sqlite':
+                            engine = await GTU.createSQLiteModels(filesOrgPathJS, resultsPath)
                             break;
                         case 'postgres':
                             engine = await GTU.createPostgresModels(filesOrgPathJS, resultsPath)
@@ -55,16 +52,19 @@ describe("Platform specyfic types", async function () {
                         case 'mariadb':
                             engine = await GTU.createMariaDBModels(filesOrgPathJS, resultsPath)
                             break;
-
+                        case 'mssql':
+                            engine = await GTU.createMSSQLModels(filesOrgPathJS, resultsPath)
+                            break;
+                        case 'oracle':
+                            engine = await GTU.createOracleDBModels(filesOrgPathJS, resultsPath)
+                            break;
                         default:
                             console.log(`Unknown engine type`);
                             engine = <Engine>{}
                             break;
                     }
 
-
-                    let result = await engine.createModelFromDatabase()
-
+                    await engine.createModelFromDatabase()
                     let filesGenPath = path.resolve(resultsPath, 'entities')
 
                     let filesOrg = fs.readdirSync(filesOrgPathTS).filter(function (this, val, ind, arr) { return val.toString().endsWith('.ts') })
@@ -83,7 +83,6 @@ describe("Platform specyfic types", async function () {
                             return path.resolve(filesGenPath, v)
                         })
                     let compileErrors = GTU.compileTsFiles(currentDirectoryFiles, {
-
                         experimentalDecorators: true,
                         sourceMap: false,
                         emitDecoratorMetadata: true,

@@ -1,13 +1,24 @@
+
 export class EntityFileToJson {
+    getEntityOptions(trimmedLine: string, ent: EntityJson) {
+        let decoratorParameters = trimmedLine.slice(trimmedLine.indexOf('(') + 1, trimmedLine.lastIndexOf(')'))
+        if (decoratorParameters.length > 0) {
+            if (decoratorParameters[0] == '"' && decoratorParameters.endsWith('"')) {
+
+            } else {
+                let badJSON = decoratorParameters.substring(decoratorParameters.indexOf(',') + 1).trim()
+                if (badJSON.lastIndexOf(',') == badJSON.length - 3) {
+                    badJSON = badJSON.slice(0, badJSON.length - 3) + badJSON[badJSON.length - 2] + badJSON[badJSON.length - 1]
+                }
+                ent.entityOptions = JSON.parse(badJSON.replace(/(['"])?([a-z0-9A-Z_]+)(['"])?:/g, '"$2": '))
+            }
+        }
+    }
     getColumnOptionsAndType(trimmedLine: string, col: EntityColumn) {
         let decoratorParameters = trimmedLine.slice(trimmedLine.indexOf('(') + 1, trimmedLine.lastIndexOf(')'))
-
         if (decoratorParameters.length > 0) {
             if (decoratorParameters.search(',') > 0) {
                 col.columnTypes = decoratorParameters.substring(0, decoratorParameters.indexOf(',')).trim().split('|').map(function (x) {
-                    // if (!x.endsWith('[]')) {
-                    //     x = x + '[]'// can't distinguish OneTwoMany from OneToOne without indexes
-                    // }
                     return x;
                 });
                 let badJSON = decoratorParameters.substring(decoratorParameters.indexOf(',') + 1).trim()
@@ -18,9 +29,6 @@ export class EntityFileToJson {
             } else {
                 if (decoratorParameters[0] == '"' && decoratorParameters.endsWith('"')) {
                     col.columnTypes = decoratorParameters.split('|').map(function (x) {
-                        // if (!x.endsWith('[]')) {
-                        //     x = x + '[]'// can't distinguish OneTwoMany from OneToOne without indexes
-                        // }
                         x = x.trim();
                         return x;
                     });
@@ -34,6 +42,21 @@ export class EntityFileToJson {
             }
         }
     }
+    getRelationOptions(trimmedLine:string, col:EntityColumn){
+        let decoratorParameters = trimmedLine.slice(trimmedLine.indexOf('(') + 1, trimmedLine.lastIndexOf(')'))
+         if (decoratorParameters.length > 0) {
+             let params = decoratorParameters.match(/(,)(?!([^{]*}))/g)
+            if ( params && params.length == 2) {
+                let badJSON = decoratorParameters.substring( decoratorParameters.lastIndexOf('{'),decoratorParameters.lastIndexOf('}')+1).trim()
+                if (badJSON.lastIndexOf(',') == badJSON.length - 3) {
+                    badJSON = badJSON.slice(0, badJSON.length - 3) + badJSON[badJSON.length - 2] + badJSON[badJSON.length - 1]
+                }
+                col.columnOptions = JSON.parse(badJSON.replace(/(')/g,`"`).replace(/(['"])?([a-z0-9A-Z_]+)(['"])?:/g, '"$2": '))
+            } else {
+
+            }
+        }
+    }
     getIndexOptions(trimmedLine: string, ind: EntityIndex) {
         let decoratorParameters = trimmedLine.slice(trimmedLine.indexOf('(') + 1, trimmedLine.lastIndexOf(')'))
 
@@ -42,7 +65,6 @@ export class EntityFileToJson {
             let containsOptions = decoratorParameters.search('{') > -1
             let containsName = decoratorParameters.search('"') > -1//TODO:no name, but fields as string[]
             if (containsName) {
-
                 ind.indexName = decoratorParameters.slice(decoratorParameters.indexOf('"') + 1, decoratorParameters.substr(decoratorParameters.indexOf('"') + 1).indexOf('"'))
             }
             if (containsTables) {
@@ -58,7 +80,6 @@ export class EntityFileToJson {
                 }).filter(v => {
                     return v.length > 0
                 }))
-
             }
             if (containsOptions) {
                 let optionsStr = decoratorParameters.slice(decoratorParameters.indexOf('{') + 1, decoratorParameters.indexOf('}'))
@@ -68,7 +89,6 @@ export class EntityFileToJson {
                             case "unique":
                                 ind.isUnique = optionsStr.split(':')[1].trim() == 'true' ? true : false;
                                 break;
-
                             default:
                                 console.log(`[EntityFileToJson:convert] Index option not recognized ${ind.indexName}:`)
                                 console.log(`${optionsStr}`)
@@ -76,9 +96,7 @@ export class EntityFileToJson {
                         }
                     }
                 })
-
             }
-
         }
     }
 
@@ -93,18 +111,24 @@ export class EntityFileToJson {
         for (let line of lines) {
             let trimmedLine = line.trim();
             if (trimmedLine.startsWith('//')) {
-                continue; //commented line
+                continue;
             }
             if (isMultilineStatement)
                 trimmedLine = priorPartOfMultilineStatement + ' ' + trimmedLine
             if (trimmedLine.length == 0)
-                continue;//empty line
-
+                continue;
             else if (!isInClassBody) {
                 if (trimmedLine.startsWith('import')) {
-                    continue; //import statement is not part of entity definition
+                    continue;
                 } else if (trimmedLine.startsWith('@Entity')) {
-                    continue; //TODO:entity options
+                    if (this.isPartOfMultilineStatement(trimmedLine)) {
+                        isMultilineStatement = true;
+                        priorPartOfMultilineStatement = trimmedLine;
+                        continue;
+                    } else {
+                        this.getEntityOptions(trimmedLine, retVal);
+                        continue;
+                    }
                 } else if (trimmedLine.startsWith('export class')) {
                     retVal.entityName = trimmedLine.substring(trimmedLine.indexOf('class') + 5, trimmedLine.lastIndexOf('{')).trim().toLowerCase()
                     isInClassBody = true;
@@ -135,7 +159,6 @@ export class EntityFileToJson {
                         retVal.columns.push(col);
                         continue;
                     }
-
                 } else if (trimmedLine.startsWith('@PrimaryColumn')) {
                     if (this.isPartOfMultilineStatement(trimmedLine)) {
                         isMultilineStatement = true;
@@ -200,6 +223,18 @@ export class EntityFileToJson {
                         column.relationType = "OneToMany"
                         continue;
                     }
+                } else if (trimmedLine.startsWith('@ManyToMany')) {
+                    if (this.isPartOfMultilineStatement(trimmedLine)) {
+                        isMultilineStatement = true;
+                        priorPartOfMultilineStatement = trimmedLine;
+                        continue;
+                    } else {
+                        isMultilineStatement = false;
+                        let column = new EntityColumn()
+                        retVal.columns.push(column)
+                        column.relationType = "ManyToMany"
+                        continue;
+                    }
                 } else if (trimmedLine.startsWith('@OneToOne')) {
                     if (this.isPartOfMultilineStatement(trimmedLine)) {
                         isMultilineStatement = true;
@@ -210,9 +245,20 @@ export class EntityFileToJson {
                         let column = new EntityColumn()
                         retVal.columns.push(column)
                         column.relationType = "OneToOne"
+                        this.getRelationOptions(trimmedLine,column);
                         continue;
                     }
                 } else if (trimmedLine.startsWith('@JoinColumn')) {
+                    if (this.isPartOfMultilineStatement(trimmedLine)) {
+                        isMultilineStatement = true;
+                        priorPartOfMultilineStatement = trimmedLine;
+                        continue;
+                    } else {
+                        isMultilineStatement = false;
+                        retVal.columns[retVal.columns.length - 1].isOwnerOfRelation = true;
+                        continue;
+                    }
+                } else if (trimmedLine.startsWith('@JoinTable')) {
                     if (this.isPartOfMultilineStatement(trimmedLine)) {
                         isMultilineStatement = true;
                         priorPartOfMultilineStatement = trimmedLine;
@@ -234,16 +280,27 @@ export class EntityFileToJson {
                         retVal.indicies.push(ind);
                         continue;
                     }
+                } else if (trimmedLine.startsWith('constructor')) {
+                    if (this.isPartOfMultilineStatement(trimmedLine)) {
+                        isMultilineStatement = true;
+                        priorPartOfMultilineStatement = trimmedLine;
+                        continue;
+                    } else {
+                        isMultilineStatement = false;
+                        continue;
+                    }
                 } else if (trimmedLine.split(':').length - 1 > 0) {
                     retVal.columns[retVal.columns.length - 1].columnName = trimmedLine.split(':')[0].trim();
                     //TODO:Should check if null only column is nullable?
-                    retVal.columns[retVal.columns.length - 1].columnTypes = trimmedLine.split(':')[1].split(';')[0].trim().split('|').map(function (x) {
+                    let colTypes=trimmedLine.split(':')[1].split(';')[0].trim();
+                    if (colTypes.startsWith('Promise<')) {
+                        colTypes=colTypes.substring(8,colTypes.length-1)
+                        retVal.columns[retVal.columns.length - 1].columnOptions.isLazy=true;
+                    }
+                    retVal.columns[retVal.columns.length - 1].columnTypes = colTypes.split('|').map(function (x) {
                         if (x == 'any') {
                             x = 'string' //for json columns
                         }
-                        // if (!x.endsWith('[]')) {
-                        //     x = x + '[]'// can't distinguish OneTwoMany from OneToOne without indexes
-                        // }
                         x = x.trim();
                         return x;
                     });
@@ -254,22 +311,16 @@ export class EntityFileToJson {
                     if (retVal.indicies.length > 0 && retVal.indicies[retVal.indicies.length - 1].columnNames.length == 0) {
                         retVal.indicies[retVal.indicies.length - 1].columnNames.push(retVal.columns[retVal.columns.length - 1].columnName)
                     }
-                    retVal.indicies.forEach(ind => {
-                        if (ind.isUnique && ind.columnNames.length == 1 && ind.columnNames[0] == retVal.columns[retVal.columns.length - 1].columnName) {
-                            retVal.columns[retVal.columns.length - 1].columnOptions['unique'] = true
-                        }
-                    })
                     continue
                 } else if (trimmedLine == '}') {
                     isInClassBody = false;
-                    continue; //class declaration end
+                    continue;
                 }
                 else {
                     console.log(`[EntityFileToJson:convert] Line not recognized in entity ${retVal.entityName}:`)
                     console.log(`${trimmedLine}`)
                 }
             }
-
             console.log(`[EntityFileToJson:convert] Line not recognized in entity ${retVal.entityName}:`)
             console.log(`${trimmedLine}`)
         }
@@ -290,16 +341,14 @@ export class EntityFileToJson {
         return retVal;
     }
     isPartOfMultilineStatement(statement: string) {
-        let matchStarting = statement.split('(').length - 1
-        let matchEnding = statement.split(')').length - 1
-
+        let matchStarting = statement.split('(').length+statement.split('{').length
+        let matchEnding = statement.split(')').length+statement.split('}').length
         return !(matchStarting == matchEnding)
     }
 }
 class EntityJson {
     entityName: string
     entityOptions: any = {}
-
     columns: EntityColumn[] = <EntityColumn[]>[];
     indicies: EntityIndex[] = <EntityIndex[]>[];
 }
@@ -307,7 +356,7 @@ class EntityColumn {
     columnName: string
     columnTypes: string[] = []
     columnOptions: any = {}
-    relationType: "OneToOne" | "OneToMany" | "ManyToOne" | "None" = "None"
+    relationType: "OneToOne" | "OneToMany" | "ManyToOne" | "ManyToMany" | "None" = "None"
     isOwnerOfRelation: boolean = false;
 }
 class EntityIndex {
