@@ -32,7 +32,7 @@ import {Index,Entity, PrimaryColumn, Column, OneToOne, OneToMany, ManyToOne, Man
     {{#if relationIdField }}
 
     @RelationId(({{../../EntityName}}: {{toEntityName ../../EntityName}}) => {{../../EntityName}}.{{toPropertyName ../tsName}})
-    {{toPropertyName ../tsName}}Id: {{#if isOneToOne}}{{toLazy ../ts_type}}{{else}}{{toLazy (concat  ../ts_type "[]")}}{{/if}};{{/if}}{{/relations}}
+    {{toPropertyName ../tsName}}Id: {{#if (or isOneToOne isManyToOne)}}{{toLazy ../ts_type}}{{else}}{{toLazy (concat  ../ts_type "[]")}}{{/if}};{{/if}}{{/relations}}
     {{/Columns}}
     {{#if GenerateConstructor}}
     constructor(init?: Partial<{{toEntityName EntityName}}>) {
