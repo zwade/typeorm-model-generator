@@ -7,8 +7,7 @@
         "setup": "npm install  && typings install",
         "start": " node ./dist/src/index.js",
         "test": "gulp coverageRemap",
-        "compile": "gulp compile",
-        "precommit": "gulp pre-commit"
+        "compile": "gulp compile"
     },
     "repository": {
         "type": "git",
