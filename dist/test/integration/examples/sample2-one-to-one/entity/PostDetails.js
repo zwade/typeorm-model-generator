@@ -31,8 +31,7 @@ __decorate([
 ], PostDetails.prototype, "metadata", void 0);
 __decorate([
     typeorm_1.OneToOne(type => Post_1.Post, post => post.details, {
-        // cascade: true,
-        onDelete: 'CASCADE'
+    // cascade: true,
     }),
     __metadata("design:type", Post_1.Post)
 ], PostDetails.prototype, "post", void 0);

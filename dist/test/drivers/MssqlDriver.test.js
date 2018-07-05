@@ -9,11 +9,12 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const chai_1 = require("chai");
-const MssqlDriver_1 = require("./../../src/drivers/MssqlDriver");
+const MssqlDriver_1 = require("../../src/drivers/MssqlDriver");
 const Sinon = require("sinon");
 const MSSQL = require("mssql");
-const EntityInfo_1 = require("./../../src/models/EntityInfo");
+const EntityInfo_1 = require("../../src/models/EntityInfo");
 const mssql_1 = require("mssql");
+const NamingStrategy_1 = require("../../src/NamingStrategy");
 class fakeResponse {
 }
 class fakeRecordset extends Array {
@@ -26,15 +27,7 @@ describe('MssqlDriver', function () {
     let sandbox = Sinon.sandbox.create();
     beforeEach(() => {
         driver = new MssqlDriver_1.MssqlDriver();
-        // sandbox.mock()
-        //  sandbox.stub( (<any>driver).Connection,)
-        //  driver = Sinon.createStubInstance(MssqlDriver);
-        //  sandbox.stub(MSSQL,'Connection')
-        //  .callsFake( (a,b)=>{
-        //      console.log(a)
-        //      b({message:'a'})
-        //  })
-        // sandbox.stub(MSSQL.)
+        driver.namingStrategy = new NamingStrategy_1.NamingStrategy();
     });
     afterEach(() => {
         sandbox.restore();
@@ -53,6 +46,7 @@ describe('MssqlDriver', function () {
         let expectedResult = [];
         let y = new EntityInfo_1.EntityInfo();
         y.EntityName = 'name';
+        y.Schema = 'schema';
         y.Columns = [];
         y.Indexes = [];
         expectedResult.push(y);
@@ -81,18 +75,21 @@ describe('MssqlDriver', function () {
         entities.push(y);
         var expected = JSON.parse(JSON.stringify(entities));
         expected[0].Columns.push({
-            char_max_lenght: null,
+            lenght: null,
             default: 'a',
             is_nullable: true,
             isPrimary: false,
             is_generated: true,
-            name: 'name',
+            tsName: 'name',
+            sqlName: 'name',
             numericPrecision: null,
             numericScale: null,
+            width: null,
             sql_type: 'int',
             ts_type: 'number',
             enumOptions: null,
-            relations: []
+            is_unique: false,
+            relations: [],
         });
         let result = yield driver.GetCoulmnsFromEntity(entities, 'schema');
         chai_1.expect(result).to.be.deep.equal(expected);

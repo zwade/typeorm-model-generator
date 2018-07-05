@@ -1,9 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const MysqlDriver_1 = require("./MysqlDriver");
-/**
- * MariaDb
- */
 class MariaDbDriver extends MysqlDriver_1.MysqlDriver {
     constructor() {
         super(...arguments);

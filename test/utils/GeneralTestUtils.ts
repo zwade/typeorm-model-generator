@@ -195,6 +195,7 @@ export async function createSQLiteModels(filesOrgPath: string, resultsPath: stri
             convertCaseEntity: 'none',
             convertCaseFile: 'none',
             convertCaseProperty: 'none',
+            removeIdSuffix: false,
             lazy: false,
             constructor:false,
             namingStrategy: namingStrategy,

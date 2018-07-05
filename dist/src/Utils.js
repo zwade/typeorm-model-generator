@@ -1,18 +1,20 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const data = require("./../../package.json");
-function LogFatalError(errText, isABug = true, errObject) {
-    let x = data;
+const packagejson = require("./../../package.json");
+function LogError(errText, isABug = true, errObject) {
     console.error(errText);
-    console.error(`Fatal error occured.`);
-    console.error(`${x.name}@${x.version}  node@${process.version}`);
-    console.error(`Fatal error occured in typeorm-model-generator.`);
-    console.error(`If this is a bug please open an issue including this log on ${x.bugs.url}`);
+    console.error(`Error occured in typeorm-model-generator.`);
+    console.error(`${packageVersion()}  node@${process.version}`);
+    console.error(`If you think this is a bug please open an issue including this log on ${packagejson.bugs.url}`);
     if (isABug && !errObject)
         errObject = new Error().stack;
     if (!!errObject)
         console.error(errObject);
-    process.abort();
+    // process.abort();
 }
-exports.LogFatalError = LogFatalError;
+exports.LogError = LogError;
+function packageVersion() {
+    return `${packagejson.name}@${packagejson.version}`;
+}
+exports.packageVersion = packageVersion;
 //# sourceMappingURL=Utils.js.map

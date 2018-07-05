@@ -21,9 +21,11 @@ const GTU = require("../utils/GeneralTestUtils");
 chai.use(chaiSubset);
 describe("TypeOrm examples", function () {
     return __awaiter(this, void 0, void 0, function* () {
-        this.timeout(20000);
+        this.timeout(30000);
         this.slow(5000); //compiling created models takes time
         let dbDrivers = [];
+        if (process.env.SQLITE_Skip == '0')
+            dbDrivers.push('sqlite');
         if (process.env.POSTGRES_Skip == '0')
             dbDrivers.push('postgres');
         if (process.env.MYSQL_Skip == '0')
@@ -32,7 +34,7 @@ describe("TypeOrm examples", function () {
             dbDrivers.push('mariadb');
         if (process.env.MSSQL_Skip == '0')
             dbDrivers.push('mssql');
-        if (process.env.Oracle_Skip == '0')
+        if (process.env.ORACLE_Skip == '0')
             dbDrivers.push('oracle');
         let examplesPathJS = path.resolve(process.cwd(), 'dist/test/integration/examples');
         let examplesPathTS = path.resolve(process.cwd(), 'test/integration/examples');
@@ -49,8 +51,8 @@ describe("TypeOrm examples", function () {
                                 fs.removeSync(resultsPath);
                                 let engine;
                                 switch (dbDriver) {
-                                    case 'mssql':
-                                        engine = yield GTU.createMSSQLModels(filesOrgPathJS, resultsPath);
+                                    case 'sqlite':
+                                        engine = yield GTU.createSQLiteModels(filesOrgPathJS, resultsPath);
                                         break;
                                     case 'postgres':
                                         engine = yield GTU.createPostgresModels(filesOrgPathJS, resultsPath);
@@ -61,6 +63,9 @@ describe("TypeOrm examples", function () {
                                     case 'mariadb':
                                         engine = yield GTU.createMariaDBModels(filesOrgPathJS, resultsPath);
                                         break;
+                                    case 'mssql':
+                                        engine = yield GTU.createMSSQLModels(filesOrgPathJS, resultsPath);
+                                        break;
                                     case 'oracle':
                                         engine = yield GTU.createOracleDBModels(filesOrgPathJS, resultsPath);
                                         break;
@@ -69,10 +74,13 @@ describe("TypeOrm examples", function () {
                                         engine = {};
                                         break;
                                 }
-                                let result = yield engine.createModelFromDatabase();
+                                if (folder == 'sample18-lazy-relations') {
+                                    engine.Options.lazy = true;
+                                }
+                                yield engine.createModelFromDatabase();
                                 let filesGenPath = path.resolve(resultsPath, 'entities');
-                                let filesOrg = fs.readdirSync(filesOrgPathTS).filter(function (val, ind, arr) { return val.toString().endsWith('.ts'); });
-                                let filesGen = fs.readdirSync(filesGenPath).filter(function (val, ind, arr) { return val.toString().endsWith('.ts'); });
+                                let filesOrg = fs.readdirSync(filesOrgPathTS).filter(function (val) { return val.toString().endsWith('.ts'); });
+                                let filesGen = fs.readdirSync(filesGenPath).filter(function (val) { return val.toString().endsWith('.ts'); });
                                 chai_1.expect(filesOrg, 'Errors detected in model comparision').to.be.deep.equal(filesGen);
                                 for (let file of filesOrg) {
                                     let entftj = new EntityFileToJson_1.EntityFileToJson();

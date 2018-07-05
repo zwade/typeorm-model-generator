@@ -32,50 +32,57 @@ __decorate([
 ], Post.prototype, "text", void 0);
 __decorate([
     typeorm_1.OneToOne(type => PostCategory_1.PostCategory, {
-        cascade: true,
+        // cascade: true,
         onDelete: 'CASCADE'
     }),
-    typeorm_1.JoinColumn(),
-    typeorm_1.Index({ unique: true }),
+    typeorm_1.JoinColumn()
+    // @Index({ unique: true })
+    ,
     __metadata("design:type", PostCategory_1.PostCategory)
 ], Post.prototype, "category", void 0);
 __decorate([
     typeorm_1.OneToOne(type => PostDetails_1.PostDetails, details => details.post, {
-        cascade: true
+        onDelete: 'CASCADE'
+        // cascade: true
     }),
-    typeorm_1.JoinColumn(),
-    typeorm_1.Index({ unique: true }),
+    typeorm_1.JoinColumn()
+    // @Index({ unique: true })
+    ,
     __metadata("design:type", PostDetails_1.PostDetails)
 ], Post.prototype, "details", void 0);
 __decorate([
     typeorm_1.OneToOne(type => PostImage_1.PostImage, image => image.post, {
-        cascade: true,
+    // cascade: true,
     }),
-    typeorm_1.JoinColumn(),
-    typeorm_1.Index({ unique: true }),
+    typeorm_1.JoinColumn()
+    // @Index({ unique: true })
+    ,
     __metadata("design:type", PostImage_1.PostImage)
 ], Post.prototype, "image", void 0);
 __decorate([
     typeorm_1.OneToOne(type => PostMetadata_1.PostMetadata, metadata => metadata.post, {
         onDelete: 'CASCADE'
     }),
-    typeorm_1.JoinColumn(),
-    typeorm_1.Index({ unique: true }),
+    typeorm_1.JoinColumn()
+    // @Index({ unique: true })
+    ,
     __metadata("design:type", Object)
 ], Post.prototype, "metadata", void 0);
 __decorate([
     typeorm_1.OneToOne(type => PostInformation_1.PostInformation, information => information.post, {
-        cascade: true,
+        // cascade: true,
         onDelete: 'CASCADE'
     }),
-    typeorm_1.JoinColumn(),
-    typeorm_1.Index({ unique: true }),
+    typeorm_1.JoinColumn()
+    // @Index({ unique: true })
+    ,
     __metadata("design:type", PostInformation_1.PostInformation)
 ], Post.prototype, "information", void 0);
 __decorate([
     typeorm_1.OneToOne(type => PostAuthor_1.PostAuthor, author => author.post),
-    typeorm_1.JoinColumn(),
-    typeorm_1.Index({ unique: true }),
+    typeorm_1.JoinColumn()
+    // @Index({ unique: true })
+    ,
     __metadata("design:type", PostAuthor_1.PostAuthor)
 ], Post.prototype, "author", void 0);
 Post = __decorate([

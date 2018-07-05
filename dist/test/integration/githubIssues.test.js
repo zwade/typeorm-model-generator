@@ -21,9 +21,11 @@ const GTU = require("../utils/GeneralTestUtils");
 chai.use(chaiSubset);
 describe("GitHub issues", function () {
     return __awaiter(this, void 0, void 0, function* () {
-        this.timeout(20000);
+        this.timeout(30000);
         this.slow(5000); //compiling created models takes time
         let dbDrivers = [];
+        if (process.env.SQLITE_Skip == '0')
+            dbDrivers.push('sqlite');
         if (process.env.POSTGRES_Skip == '0')
             dbDrivers.push('postgres');
         if (process.env.MYSQL_Skip == '0')
@@ -32,6 +34,8 @@ describe("GitHub issues", function () {
             dbDrivers.push('mariadb');
         if (process.env.MSSQL_Skip == '0')
             dbDrivers.push('mssql');
+        if (process.env.ORACLE_Skip == '0')
+            dbDrivers.push('oracle');
         let examplesPathJS = path.resolve(process.cwd(), 'dist/test/integration/github-issues');
         let examplesPathTS = path.resolve(process.cwd(), 'test/integration/github-issues');
         let files = fs.readdirSync(examplesPathTS);
@@ -39,6 +43,14 @@ describe("GitHub issues", function () {
             describe(`#${folder}`, function () {
                 return __awaiter(this, void 0, void 0, function* () {
                     for (let dbDriver of dbDrivers) {
+                        switch (folder) {
+                            case '39':
+                                if (dbDriver == 'mysql' || dbDriver == 'mariadb' || dbDriver == 'oracle' || dbDriver == 'sqlite')
+                                    continue;
+                                break;
+                            default:
+                                break;
+                        }
                         it(dbDriver, function () {
                             return __awaiter(this, void 0, void 0, function* () {
                                 let filesOrgPathJS = path.resolve(examplesPathJS, folder, 'entity');
@@ -47,8 +59,8 @@ describe("GitHub issues", function () {
                                 fs.removeSync(resultsPath);
                                 let engine;
                                 switch (dbDriver) {
-                                    case 'mssql':
-                                        engine = yield GTU.createMSSQLModels(filesOrgPathJS, resultsPath);
+                                    case 'sqlite':
+                                        engine = yield GTU.createSQLiteModels(filesOrgPathJS, resultsPath);
                                         break;
                                     case 'postgres':
                                         engine = yield GTU.createPostgresModels(filesOrgPathJS, resultsPath);
@@ -59,15 +71,28 @@ describe("GitHub issues", function () {
                                     case 'mariadb':
                                         engine = yield GTU.createMariaDBModels(filesOrgPathJS, resultsPath);
                                         break;
+                                    case 'mssql':
+                                        engine = yield GTU.createMSSQLModels(filesOrgPathJS, resultsPath);
+                                        break;
+                                    case 'oracle':
+                                        engine = yield GTU.createOracleDBModels(filesOrgPathJS, resultsPath);
+                                        break;
                                     default:
                                         console.log(`Unknown engine type`);
                                         engine = {};
                                         break;
                                 }
-                                let result = yield engine.createModelFromDatabase();
+                                switch (folder) {
+                                    case '65':
+                                        engine.Options.relationIds = true;
+                                        break;
+                                    default:
+                                        break;
+                                }
+                                yield engine.createModelFromDatabase();
                                 let filesGenPath = path.resolve(resultsPath, 'entities');
-                                let filesOrg = fs.readdirSync(filesOrgPathTS).filter(function (val, ind, arr) { return val.toString().endsWith('.ts'); });
-                                let filesGen = fs.readdirSync(filesGenPath).filter(function (val, ind, arr) { return val.toString().endsWith('.ts'); });
+                                let filesOrg = fs.readdirSync(filesOrgPathTS).filter(function (val) { return val.toString().endsWith('.ts'); });
+                                let filesGen = fs.readdirSync(filesGenPath).filter(function (val) { return val.toString().endsWith('.ts'); });
                                 chai_1.expect(filesOrg, 'Errors detected in model comparision').to.be.deep.equal(filesGen);
                                 for (let file of filesOrg) {
                                     let entftj = new EntityFileToJson_1.EntityFileToJson();

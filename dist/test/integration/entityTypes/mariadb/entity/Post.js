@@ -29,6 +29,10 @@ __decorate([
     __metadata("design:type", Number)
 ], Post.prototype, "tinyint", void 0);
 __decorate([
+    typeorm_1.Column("tinyint", { width: 1 }),
+    __metadata("design:type", Boolean)
+], Post.prototype, "boolean", void 0);
+__decorate([
     typeorm_1.Column("smallint"),
     __metadata("design:type", Number)
 ], Post.prototype, "smallint", void 0);
@@ -38,7 +42,7 @@ __decorate([
 ], Post.prototype, "mediumint", void 0);
 __decorate([
     typeorm_1.Column("bigint"),
-    __metadata("design:type", Number)
+    __metadata("design:type", String)
 ], Post.prototype, "bigint", void 0);
 __decorate([
     typeorm_1.Column("float"),
@@ -50,7 +54,7 @@ __decorate([
 ], Post.prototype, "double", void 0);
 __decorate([
     typeorm_1.Column("decimal"),
-    __metadata("design:type", Number)
+    __metadata("design:type", String)
 ], Post.prototype, "decimal", void 0);
 __decorate([
     typeorm_1.Column("date"),
@@ -116,6 +120,42 @@ __decorate([
     typeorm_1.Column("enum", { enum: ["A", "B", "C"] }),
     __metadata("design:type", String)
 ], Post.prototype, "enum", void 0);
+__decorate([
+    typeorm_1.Column("binary"),
+    __metadata("design:type", Buffer)
+], Post.prototype, "binary", void 0);
+__decorate([
+    typeorm_1.Column("geometry"),
+    __metadata("design:type", String)
+], Post.prototype, "geometry", void 0);
+__decorate([
+    typeorm_1.Column("point"),
+    __metadata("design:type", String)
+], Post.prototype, "point", void 0);
+__decorate([
+    typeorm_1.Column("linestring"),
+    __metadata("design:type", String)
+], Post.prototype, "linestring", void 0);
+__decorate([
+    typeorm_1.Column("polygon"),
+    __metadata("design:type", String)
+], Post.prototype, "polygon", void 0);
+__decorate([
+    typeorm_1.Column("multipoint"),
+    __metadata("design:type", String)
+], Post.prototype, "multipoint", void 0);
+__decorate([
+    typeorm_1.Column("multilinestring"),
+    __metadata("design:type", String)
+], Post.prototype, "multilinestring", void 0);
+__decorate([
+    typeorm_1.Column("multipolygon"),
+    __metadata("design:type", String)
+], Post.prototype, "multipolygon", void 0);
+__decorate([
+    typeorm_1.Column("geometrycollection"),
+    __metadata("design:type", String)
+], Post.prototype, "geometrycollection", void 0);
 Post = __decorate([
     typeorm_1.Entity("Post")
 ], Post);

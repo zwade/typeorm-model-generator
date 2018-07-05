@@ -1,14 +1,14 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-/**
- * ColumnInfo
- */
 class ColumnInfo {
     constructor() {
-        this.name = "";
+        this.tsName = "";
+        this.sqlName = "";
         this.default = null;
         this.is_nullable = false;
-        this.char_max_lenght = null;
+        this.is_unique = false;
+        this.lenght = null;
+        this.width = null;
         this.isPrimary = false;
         this.is_generated = false;
         this.numericPrecision = null;

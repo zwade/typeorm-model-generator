@@ -21,10 +21,6 @@ __decorate([
     __metadata("design:type", String)
 ], EverythingEntity.prototype, "name", void 0);
 __decorate([
-    typeorm_1.Column("text"),
-    __metadata("design:type", String)
-], EverythingEntity.prototype, "text", void 0);
-__decorate([
     typeorm_1.Column({ length: 32 }),
     __metadata("design:type", String)
 ], EverythingEntity.prototype, "shortTextColumn", void 0);

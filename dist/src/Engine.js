@@ -13,9 +13,6 @@ const fs = require("fs");
 const path = require("path");
 const TomgUtils = require("./Utils");
 const changeCase = require("change-case");
-/**
- * Engine
- */
 class Engine {
     constructor(driver, Options) {
         this.driver = driver;
@@ -23,19 +20,19 @@ class Engine {
     }
     createModelFromDatabase() {
         return __awaiter(this, void 0, void 0, function* () {
-            let dbModel = yield this.getEntitiesInfo(this.Options.databaseName, this.Options.host, this.Options.port, this.Options.user, this.Options.password, this.Options.schemaName, this.Options.ssl);
+            let dbModel = yield this.getEntitiesInfo(this.Options.databaseName, this.Options.host, this.Options.port, this.Options.user, this.Options.password, this.Options.schemaName, this.Options.ssl, this.Options.namingStrategy, this.Options.relationIds);
             if (dbModel.entities.length > 0) {
                 this.createModelFromMetadata(dbModel);
             }
             else {
-                TomgUtils.LogFatalError("Tables not found in selected database. Skipping creation of typeorm model.", false);
+                TomgUtils.LogError("Tables not found in selected database. Skipping creation of typeorm model.", false);
             }
             return true;
         });
     }
-    getEntitiesInfo(database, server, port, user, password, schemaName, ssl) {
+    getEntitiesInfo(database, server, port, user, password, schemaName, ssl, namingStrategy, relationIds) {
         return __awaiter(this, void 0, void 0, function* () {
-            return yield this.driver.GetDataFromServer(database, server, port, user, password, schemaName, ssl);
+            return yield this.driver.GetDataFromServer(database, server, port, user, password, schemaName, ssl, namingStrategy, relationIds);
         });
     }
     createModelFromMetadata(databaseModel) {
@@ -123,10 +120,24 @@ class Engine {
         Handlebars.registerHelper("curly", open => {
             return open ? "{" : "}";
         });
-        Handlebars.registerHelper("toEntityName", str => toEntityName(str));
-        Handlebars.registerHelper("array", str => str + "[]");
-        Handlebars.registerHelper("makeLazy", str => this.Options.lazy ? `Promise<${str}>` : str);
-        Handlebars.registerHelper("addLazyParameter", () => this.Options.lazy ? `, { lazy: true }` : "");
+        Handlebars.registerHelper("toEntityName", str => {
+            let retStr = "";
+            switch (this.Options.convertCaseEntity) {
+                case "camel":
+                    retStr = changeCase.camelCase(str);
+                    break;
+                case "pascal":
+                    retStr = changeCase.pascalCase(str);
+                    break;
+                case "none":
+                    retStr = str;
+                    break;
+            }
+            return retStr;
+        });
+        Handlebars.registerHelper("concat", (stra, strb) => {
+            return stra + strb;
+        });
         Handlebars.registerHelper("toFileName", str => {
             let retStr = "";
             switch (this.Options.convertCaseFile) {
@@ -175,6 +186,38 @@ class Engine {
         Handlebars.registerHelper("toLowerCase", str => {
             return str.toLowerCase();
         });
+        Handlebars.registerHelper("toLazy", str => {
+            if (this.Options.lazy)
+                return `Promise<${str}>`;
+            else
+                return str;
+        });
+        Handlebars.registerHelper({
+            eq: function (v1, v2) {
+                return v1 === v2;
+            },
+            ne: function (v1, v2) {
+                return v1 !== v2;
+            },
+            lt: function (v1, v2) {
+                return v1 < v2;
+            },
+            gt: function (v1, v2) {
+                return v1 > v2;
+            },
+            lte: function (v1, v2) {
+                return v1 <= v2;
+            },
+            gte: function (v1, v2) {
+                return v1 >= v2;
+            },
+            and: function (v1, v2) {
+                return v1 && v2;
+            },
+            or: function (v1, v2) {
+                return v1 || v2;
+            }
+        });
     }
     //TODO:Move to mustache template file
     createTsConfigFile(resultPath) {
@@ -199,7 +242,7 @@ class Engine {
     "username": "${this.Options.user}",
     "password": "${this.Options.password}",
     "database": "${this.Options.databaseName}",
-    "synchronize": false
+    "synchronize": false,
     "entities": [
       "entities/*.js"
     ]
