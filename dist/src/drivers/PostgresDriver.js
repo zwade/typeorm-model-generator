@@ -232,6 +232,27 @@ class PostgresDriver extends AbstractDriver_1.AbstractDriver {
             return entities;
         });
     }
+    GetEnums(schema) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let enumsResponse = (yield this.Connection.query(`
+            SELECT t.typname AS enum_name,
+                e.enumlabel AS enum_value
+            FROM pg_type t
+                JOIN pg_enum e ON t.oid = e.enumtypid
+                JOIN pg_catalog.pg_namespace n ON n.oid = t.typnamespace
+            WHERE n.nspname = '${schema}'`))
+                .rows;
+            let enums = enumsResponse
+                .reduce((enums, { enum_name, enum_value }) => {
+                if (!enums.has(enum_name)) {
+                    enums.set(enum_name, []);
+                }
+                enums.get(enum_name).push(enum_value);
+                return enums;
+            }, new Map());
+            return Array.from(enums.keys()).map((name) => ({ name, values: enums.get(name) }));
+        });
+    }
     GetIndexesFromEntity(entities, schema) {
         return __awaiter(this, void 0, void 0, function* () {
             let response = (yield this.Connection.query(`SELECT

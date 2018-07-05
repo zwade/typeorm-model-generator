@@ -1,6 +1,7 @@
 import { AbstractDriver } from "./AbstractDriver";
 import { ColumnInfo } from "../models/ColumnInfo";
 import { EntityInfo } from "../models/EntityInfo";
+import { EnumInfo } from "../models/EnumInfo";
 import * as TomgUtils from "../Utils";
 
 export class OracleDriver extends AbstractDriver {
@@ -279,6 +280,9 @@ export class OracleDriver extends AbstractDriver {
             entities
         );
         return entities;
+    }
+    async GetEnums(schema: string): Promise<EnumInfo[]> {
+        return [];
     }
     async DisconnectFromServer() {
         if (this.Connection) await this.Connection.close();

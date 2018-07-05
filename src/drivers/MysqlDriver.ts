@@ -2,6 +2,7 @@ import { AbstractDriver } from "./AbstractDriver";
 import * as MYSQL from "mysql";
 import { ColumnInfo } from "../models/ColumnInfo";
 import { EntityInfo } from "../models/EntityInfo";
+import { EnumInfo } from "../models/EnumInfo";
 import * as TomgUtils from "../Utils";
 
 export class MysqlDriver extends AbstractDriver {
@@ -310,6 +311,9 @@ export class MysqlDriver extends AbstractDriver {
             entities
         );
         return entities;
+    }
+    async GetEnums(schema: string): Promise<EnumInfo[]> {
+        return [];
     }
     async DisconnectFromServer() {
         let promise = new Promise<boolean>((resolve, reject) => {

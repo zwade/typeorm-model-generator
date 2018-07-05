@@ -224,6 +224,11 @@ class SqliteDriver extends AbstractDriver_1.AbstractDriver {
             return entities;
         });
     }
+    GetEnums(schema) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return [];
+        });
+    }
     DisconnectFromServer() {
         return __awaiter(this, void 0, void 0, function* () {
             this.db.close();

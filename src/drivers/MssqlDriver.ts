@@ -2,6 +2,7 @@ import { AbstractDriver } from "./AbstractDriver";
 import * as MSSQL from "mssql";
 import { ColumnInfo } from "../models/ColumnInfo";
 import { EntityInfo } from "../models/EntityInfo";
+import { EnumInfo } from "../models/EnumInfo";
 import * as TomgUtils from "../Utils";
 
 export class MssqlDriver extends AbstractDriver {
@@ -343,6 +344,9 @@ order by
             entities
         );
         return entities;
+    }
+    async GetEnums(schema: string): Promise<EnumInfo[]> {
+        return [];
     }
     async DisconnectFromServer() {
         if (this.Connection) await this.Connection.close();

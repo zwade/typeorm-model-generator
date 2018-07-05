@@ -2,6 +2,7 @@ import { EntityInfo } from "../models/EntityInfo";
 import { DatabaseModel } from "../models/DatabaseModel";
 import * as TomgUtils from "../Utils";
 import { RelationInfo } from "../models/RelationInfo";
+import { EnumInfo } from "../models/EnumInfo";
 import { ColumnInfo } from "../models/ColumnInfo";
 import {
     WithWidthColumnType,
@@ -254,6 +255,7 @@ export abstract class AbstractDriver {
             dbModel.entities,
             sqlEscapedSchema
         );
+        dbModel.enums = await this.GetEnums(schema);
         await this.DisconnectFromServer();
         this.FindManyToManyRelations(dbModel);
         this.FindPrimaryColumnsFromIndexes(dbModel);
@@ -462,6 +464,9 @@ export abstract class AbstractDriver {
         entities: EntityInfo[],
         schema: string
     ): Promise<EntityInfo[]>;
+    abstract async GetEnums(
+        schema: String
+    ): Promise<EnumInfo[]>;
 
     FindPrimaryColumnsFromIndexes(dbModel: DatabaseModel) {
         dbModel.entities.forEach(entity => {

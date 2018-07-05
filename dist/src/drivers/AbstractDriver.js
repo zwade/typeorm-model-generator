@@ -209,6 +209,7 @@ class AbstractDriver {
             yield this.GetCoulmnsFromEntity(dbModel.entities, sqlEscapedSchema);
             yield this.GetIndexesFromEntity(dbModel.entities, sqlEscapedSchema);
             dbModel.entities = yield this.GetRelations(dbModel.entities, sqlEscapedSchema);
+            dbModel.enums = yield this.GetEnums(schema);
             yield this.DisconnectFromServer();
             this.FindManyToManyRelations(dbModel);
             this.FindPrimaryColumnsFromIndexes(dbModel);

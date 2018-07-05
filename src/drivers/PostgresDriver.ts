@@ -2,6 +2,7 @@ import { AbstractDriver } from "./AbstractDriver";
 import * as PG from "pg";
 import { ColumnInfo } from "../models/ColumnInfo";
 import { EntityInfo } from "../models/EntityInfo";
+import { EnumInfo } from "../models/EnumInfo";
 import * as TomgUtils from "../Utils";
 
 export class PostgresDriver extends AbstractDriver {
@@ -251,6 +252,32 @@ export class PostgresDriver extends AbstractDriver {
                 });
         });
         return entities;
+    }
+    async GetEnums(schema: string): Promise<EnumInfo[]> {
+        let enumsResponse: {
+            enum_name: string;
+            enum_value: string;
+        }[] = (await this.Connection.query(`
+            SELECT t.typname AS enum_name,
+                e.enumlabel AS enum_value
+            FROM pg_type t
+                JOIN pg_enum e ON t.oid = e.enumtypid
+                JOIN pg_catalog.pg_namespace n ON n.oid = t.typnamespace
+            WHERE n.nspname = '${schema}'`))
+                .rows;
+
+        let enums =
+            enumsResponse
+                .reduce((enums, { enum_name, enum_value }) => {
+                    if (!enums.has(enum_name)) {
+                        enums.set(enum_name, []);
+                    }
+
+                    enums.get(enum_name)!.push(enum_value);
+                    return enums;
+                }, new Map<string, string[]>());
+
+        return Array.from(enums.keys()).map((name) => ({ name, values: enums.get(name)! }));
     }
     async GetIndexesFromEntity(
         entities: EntityInfo[],

@@ -1,6 +1,7 @@
 import { AbstractDriver } from "./AbstractDriver";
 import { ColumnInfo } from "../models/ColumnInfo";
 import { EntityInfo } from "../models/EntityInfo";
+import { EnumInfo } from "../models/EnumInfo";
 import * as TomgUtils from "../Utils";
 
 export class SqliteDriver extends AbstractDriver {
@@ -278,6 +279,9 @@ export class SqliteDriver extends AbstractDriver {
             );
         }
         return entities;
+    }
+    async GetEnums(schema: string): Promise<EnumInfo[]> {
+        return [];
     }
     async DisconnectFromServer() {
         this.db.close();
