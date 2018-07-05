@@ -1,6 +1,5 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const SqliteDriver_1 = require("./drivers/SqliteDriver");
 const Engine_1 = require("./Engine");
 const Yargs = require("yargs");
 const TomgUtils = require("./Utils");
@@ -127,7 +126,7 @@ switch (argv.e) {
         standardUser = "SYS";
         break;
     case "sqlite":
-        driver = new SqliteDriver_1.SqliteDriver();
+        driver = new (require("./drivers/SqliteDriver").SqliteDriver)();
         standardPort = 0;
         break;
     default:

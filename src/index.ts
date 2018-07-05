@@ -131,7 +131,7 @@ switch (argv.e) {
         standardUser = "SYS";
         break;
     case "sqlite":
-        driver = new SqliteDriver();
+        driver = new (require("./drivers/SqliteDriver").SqliteDriver)();
         standardPort = 0;
         break;
     default:
