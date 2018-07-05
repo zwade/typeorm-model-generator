@@ -14,7 +14,7 @@ class RelationInfo {
         return this.relationType == "OneToOne";
     }
     get isManyToOne() {
-        return this.relationType == "OneToOne";
+        return this.relationType == "ManyToOne";
     }
 }
 exports.RelationInfo = RelationInfo;
