@@ -1,10 +1,4 @@
 import { AbstractDriver } from "./drivers/AbstractDriver";
-import { MssqlDriver } from "./drivers/MssqlDriver";
-import { PostgresDriver } from "./drivers/PostgresDriver";
-import { SqliteDriver } from "./drivers/SqliteDriver";
-import { MysqlDriver } from "./drivers/MysqlDriver";
-import { MariaDbDriver } from "./drivers/MariaDbDriver";
-import { OracleDriver } from "./drivers/OracleDriver";
 import { Engine } from "./Engine";
 import * as Yargs from "yargs";
 import * as TomgUtils from "./Utils";
