@@ -23,12 +23,12 @@ export class NamingStrategy extends AbstractNamingStrategy {
             columnName
                 .toLowerCase()
                 .endsWith(
-                    "id"
+                    "_id"
                 ) /*&& !ownerEntity.Columns.some(x=>x.tsName==columnName && x.isPrimary)*/
         ) {
             columnName = columnName.substring(
                 0,
-                columnName.toLowerCase().lastIndexOf("id")
+                columnName.toLowerCase().lastIndexOf("_id")
             );
         }
         if (!isNaN(parseInt(columnName[columnName.length - 1]))) {

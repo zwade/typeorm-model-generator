@@ -14,8 +14,8 @@ class NamingStrategy extends AbstractNamingStrategy_1.AbstractNamingStrategy {
             columnOldName.substring(1, columnOldName.length);
         if (columnName
             .toLowerCase()
-            .endsWith("id") /*&& !ownerEntity.Columns.some(x=>x.tsName==columnName && x.isPrimary)*/) {
-            columnName = columnName.substring(0, columnName.toLowerCase().lastIndexOf("id"));
+            .endsWith("_id") /*&& !ownerEntity.Columns.some(x=>x.tsName==columnName && x.isPrimary)*/) {
+            columnName = columnName.substring(0, columnName.toLowerCase().lastIndexOf("_id"));
         }
         if (!isNaN(parseInt(columnName[columnName.length - 1]))) {
             columnName = columnName.substring(0, columnName.length - 1);
