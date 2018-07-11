@@ -14,7 +14,7 @@ export class PostgresDriver extends AbstractDriver {
             TABLE_NAME: string;
             TABLE_TYPE: "BASE TABLE" | "VIEW";
         }[] = (await this.Connection.query(
-            `SELECT table_schema as "TABLE_SCHEMA",table_name as "TABLE_NAME", table_type as TABLE_TYPE FROM INFORMATION_SCHEMA.TABLES WHERE table_schema in (${schema}) `
+            `SELECT table_schema as "TABLE_SCHEMA",table_name as "TABLE_NAME", table_type as "TABLE_TYPE" FROM INFORMATION_SCHEMA.TABLES WHERE table_schema in (${schema}) `
         )).rows;
         return response;
     };
@@ -338,6 +338,7 @@ export class PostgresDriver extends AbstractDriver {
                         ent.Indexes.push(indexInfo);
                     }
                     indexColumnInfo.name = resp.columnname;
+                    indexColumnInfo.sqlName = resp.columnname;
                     if (resp.is_primary_key == 0) {
                         indexInfo.isPrimaryKey = false;
                     }
