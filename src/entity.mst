@@ -4,7 +4,7 @@ import {Index,Entity, PrimaryColumn, Column, OneToOne, OneToMany, ManyToOne, Man
 
 
 @Entity("{{EntityName}}"{{#Schema}},{schema:"{{.}}"}{{/Schema}})
-{{#Indexes}}{{^isPrimaryKey}}@Index("{{name}}",[{{#columns}}"{{sqlName}}",{{/columns}}]{{#isUnique}},{unique:true}{{/isUnique}})
+{{#Indexes}}{{^isPrimaryKey}}@Index("{{name}}",[{{#columns}}"{{name}}",{{/columns}}]{{#isUnique}},{unique:true}{{/isUnique}})
 {{/isPrimaryKey}}{{/Indexes}}export class {{toEntityName EntityName}} {
 {{#Columns}}
 
@@ -25,7 +25,7 @@ import {Index,Entity, PrimaryColumn, Column, OneToOne, OneToMany, ManyToOne, Man
     {{toPropertyName tsName}}:{{tsTypeToString ts_type}}{{#is_nullable}} | null{{/is_nullable}};
         {{/relations}}{{#relations}}
     @{{relationType}}(type=>{{toEntityName relatedTable}}, {{toEntityName relatedTable}}=>{{toEntityName relatedTable}}.{{#if isOwner}}{{toPropertyName ownerColumn}},{ {{#../isPrimary}}primary:true,{{/../isPrimary}}{{^../is_nullable}} nullable:false,{{/../is_nullable}}{{#actionOnDelete}}onDelete: '{{.}}',{{/actionOnDelete}}{{#actionOnUpdate}}onUpdate: '{{.}}'{{/actionOnUpdate}} }{{else}}{{toPropertyName relatedColumn}}{{#actionOnDelete}},{ onDelete: '{{.}}' }{{/actionOnDelete}}{{/if}}){{#isOwner}}
-    {{#if isManyToMany}}@JoinTable({ name: '{{joinInfo.joinTable}}', joinColumn: {{joinInfo.joinColumn}}, inverseJoinColumn: {{joinInfo.inverseJoinColumn}} }){{else}}@JoinColumn({ name:'{{ ../sqlName}}'}){{/if}}{{/isOwner}}
+    {{#if isManyToMany}}@JoinTable({{#joinInfo}}{ name: '{{joinTable}}', joinColumns: [{{#joinColumns}} { name: "{{.}}" },{{/joinColumns}} ], inverseJoinColumns: [{{#inverseJoinColumns}} { name: "{{.}}" },{{/inverseJoinColumns}} ] }{{/joinInfo}}){{else}}@JoinColumn({ name:'{{ ../sqlName}}'}){{/if}}{{/isOwner}}
     {{#if (or isOneToMany isManyToMany)}}{{toPropertyName ../tsName}}:{{toLazy (concat  (toEntityName relatedTable) "[]")}};
     {{else}}{{toPropertyName ../tsName}}:{{toLazy (concat (toEntityName relatedTable) ' | null')}};
     {{/if}}
@@ -36,7 +36,7 @@ import {Index,Entity, PrimaryColumn, Column, OneToOne, OneToMany, ManyToOne, Man
     {{/Columns}}
     {{#if GenerateConstructor}}
     constructor(init?: Partial<{{toEntityName EntityName}}>) {
-		Object.assign(this, init);
-	}
+        Object.assign(this, init);
+    }
     {{/if}}
 }

@@ -16,7 +16,7 @@ class PostgresDriver extends AbstractDriver_1.AbstractDriver {
     constructor() {
         super(...arguments);
         this.GetAllTablesQuery = (schema) => __awaiter(this, void 0, void 0, function* () {
-            let response = (yield this.Connection.query(`SELECT table_schema as "TABLE_SCHEMA",table_name as "TABLE_NAME" FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE='BASE TABLE' AND table_schema in (${schema}) `)).rows;
+            let response = (yield this.Connection.query(`SELECT table_schema as "TABLE_SCHEMA",table_name as "TABLE_NAME", table_type as TABLE_TYPE FROM INFORMATION_SCHEMA.TABLES WHERE table_schema in (${schema}) `)).rows;
             return response;
         });
     }

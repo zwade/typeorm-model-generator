@@ -3,6 +3,7 @@ import { ColumnInfo } from "./ColumnInfo";
 export class EntityInfo {
     EntityName: string;
     Columns: ColumnInfo[];
+    Type?: "BASE TABLE" | "VIEW";
     Imports: string[];
     UniqueImports: string[];
     Indexes: IndexInfo[];

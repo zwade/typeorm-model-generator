@@ -297,6 +297,7 @@ export abstract class AbstractDriver {
         {
             TABLE_SCHEMA: string;
             TABLE_NAME: string;
+            TABLE_TYPE?: "BASE TABLE" | "VIEW";
         }[]
     >;
 
@@ -307,6 +308,7 @@ export abstract class AbstractDriver {
             let ent: EntityInfo = new EntityInfo();
             ent.EntityName = val.TABLE_NAME;
             ent.Schema = val.TABLE_SCHEMA;
+            ent.Type = val.TABLE_TYPE;
             ent.Columns = <ColumnInfo[]>[];
             ent.Indexes = <IndexInfo[]>[];
             ret.push(ent);
@@ -493,16 +495,17 @@ export abstract class AbstractDriver {
                 )
                     col.isPrimary = true;
             });
-            if (
-                !entity.Columns.some(v => {
-                    return v.isPrimary;
-                })
-            ) {
-                TomgUtils.LogError(
-                    `Table ${entity.EntityName} has no PK.`,
-                    false
-                );
-                return;
+            if (!entity.Columns.some(v => v.isPrimary)) {
+                if (entity.Type === "VIEW") {
+                    // jokes, let's just call everything primary
+                    entity.Columns.forEach((col) => { col.isPrimary = true; });
+                } else {
+                    TomgUtils.LogError(
+                        `Table ${entity.EntityName} has no PK.`,
+                        false
+                    );
+                    return;
+                }
             }
         });
     }
