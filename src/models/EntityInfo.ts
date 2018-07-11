@@ -11,6 +11,7 @@ export class EntityInfo {
     public GenerateConstructor: boolean;
     public IsActiveRecord: boolean;
     public Database: string;
+    public Type?: "BASE TABLE" | "VIEW";
 
     public relationImports() {
         const imports: string[] = [];

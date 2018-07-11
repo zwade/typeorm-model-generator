@@ -68,6 +68,7 @@ export abstract class AbstractDriver {
             TABLE_SCHEMA: string;
             TABLE_NAME: string;
             DB_NAME: string;
+            TABLE_TYPE?: "BASE TABLE" | "VIEW";
         }>
     >;
 
@@ -198,6 +199,7 @@ export abstract class AbstractDriver {
             ent.Columns = [] as ColumnInfo[];
             ent.Indexes = [] as IndexInfo[];
             ent.Database = dbNames.includes(",") ? val.DB_NAME : "";
+            ent.Type = val.TABLE_TYPE;
             ret.push(ent);
         });
         return ret;
@@ -377,16 +379,19 @@ export abstract class AbstractDriver {
                         cIndex => cIndex.name === col.tsName
                     )
             ).forEach(col => (col.options.primary = true));
-            if (
-                !entity.Columns.some(v => {
-                    return !!v.options.primary;
-                })
-            ) {
-                TomgUtils.LogError(
-                    `Table ${entity.tsEntityName} has no PK.`,
-                    false
-                );
-                return;
+            if (!entity.Columns.some(v => !!v.options.primary)) {
+                if (entity.Type === "VIEW") {
+                    // jokes, let's just call everything primary
+                    entity.Columns.forEach(col => {
+                        col.options.primary = true;
+                    });
+                } else {
+                    TomgUtils.LogError(
+                        `Table ${entity.tsEntityName} has no PK.`,
+                        false
+                    );
+                    return;
+                }
             }
         });
     }
