@@ -184,6 +184,16 @@ class AbstractDriver {
                 col1Rel.relationType = "ManyToMany";
                 col1Rel.isOwner = true;
                 col1Rel.ownerColumn = namesOfRelatedTables[0];
+                let entityColumnsWithRelations = entity.Columns.filter((col) => col.relations.length > 0);
+                col1Rel.joinInfo = {
+                    joinTable: entity.EntityName,
+                    joinColumns: entity.Columns
+                        .filter((col) => col.relations.some((rel) => rel.relatedTable === namesOfRelatedTables[0]))
+                        .map((col) => col.sqlName),
+                    inverseJoinColumns: entity.Columns
+                        .filter((col) => col.relations.some((rel) => rel.relatedTable === namesOfRelatedTables[1]))
+                        .map((col) => col.sqlName)
+                };
                 column1.relations.push(col1Rel);
                 relatedTable1.Columns.push(column1);
                 let column2 = new ColumnInfo_1.ColumnInfo();

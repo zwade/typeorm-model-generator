@@ -8,6 +8,7 @@ export class RelationInfo {
     actionOnDelete: "RESTRICT" | "CASCADE" | "SET NULL" | null;
     actionOnUpdate: "RESTRICT" | "CASCADE" | "SET NULL" | null;
     relationIdField: boolean = false;
+    joinInfo?: { joinTable: string, joinColumns: string[], inverseJoinColumns: string[] };
 
     get isOneToMany(): boolean {
         return this.relationType == "OneToMany";
