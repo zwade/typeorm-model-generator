@@ -41,4 +41,5 @@ Post = __decorate([
     typeorm_1.Index("my_index_with_id_and_title", (post) => [post.id, post.title], { unique: true })
 ], Post);
 exports.Post = Post;
+
 //# sourceMappingURL=Post.js.map

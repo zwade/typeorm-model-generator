@@ -360,4 +360,5 @@ function compileTsFiles(fileNames, options) {
     return compileErrors;
 }
 exports.compileTsFiles = compileTsFiles;
+
 //# sourceMappingURL=GeneralTestUtils.js.map

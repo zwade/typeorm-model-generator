@@ -43,4 +43,5 @@ feedextrainfo = __decorate([
     typeorm_1.Index("feedExtraInfo_QuestId_idx", ["questId",])
 ], feedextrainfo);
 exports.feedextrainfo = feedextrainfo;
+
 //# sourceMappingURL=feedextrainfo.js.map

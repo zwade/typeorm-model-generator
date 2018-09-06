@@ -37,4 +37,5 @@ Post = __decorate([
     typeorm_1.Entity("Post", { schema: "sch1" })
 ], Post);
 exports.Post = Post;
+
 //# sourceMappingURL=Post.js.map

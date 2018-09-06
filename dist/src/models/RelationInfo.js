@@ -18,4 +18,5 @@ class RelationInfo {
     }
 }
 exports.RelationInfo = RelationInfo;
+
 //# sourceMappingURL=RelationInfo.js.map

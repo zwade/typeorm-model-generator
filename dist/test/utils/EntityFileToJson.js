@@ -398,4 +398,5 @@ class EntityIndex {
         this.isUnique = false;
     }
 }
+
 //# sourceMappingURL=EntityFileToJson.js.map

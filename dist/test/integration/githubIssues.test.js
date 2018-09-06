@@ -121,4 +121,5 @@ describe("GitHub issues", function () {
         }
     });
 });
+
 //# sourceMappingURL=githubIssues.test.js.map

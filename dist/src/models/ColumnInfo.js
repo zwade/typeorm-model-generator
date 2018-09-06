@@ -18,4 +18,5 @@ class ColumnInfo {
     }
 }
 exports.ColumnInfo = ColumnInfo;
+
 //# sourceMappingURL=ColumnInfo.js.map

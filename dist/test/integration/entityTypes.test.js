@@ -104,4 +104,5 @@ describe("Platform specyfic types", function () {
         }
     });
 });
+
 //# sourceMappingURL=entityTypes.test.js.map

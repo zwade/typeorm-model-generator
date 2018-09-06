@@ -285,6 +285,7 @@ class AbstractDriver {
                 isOneToMany = false;
                 let index = ownerEntity.Indexes.find(index => {
                     return (index.isUnique &&
+                        index.columns.length === 1 &&
                         index.columns.some(col => {
                             return col.name == ownerColumn.tsName;
                         }));
@@ -373,4 +374,5 @@ class AbstractDriver {
     }
 }
 exports.AbstractDriver = AbstractDriver;
+
 //# sourceMappingURL=AbstractDriver.js.map

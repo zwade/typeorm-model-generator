@@ -29,4 +29,5 @@ PostInformation = __decorate([
     typeorm_1.Entity("PostInformation")
 ], PostInformation);
 exports.PostInformation = PostInformation;
+
 //# sourceMappingURL=PostInformation.js.map

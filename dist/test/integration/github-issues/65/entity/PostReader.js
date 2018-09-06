@@ -34,4 +34,5 @@ PostReader = __decorate([
     typeorm_1.Entity("PostReader")
 ], PostReader);
 exports.PostReader = PostReader;
+
 //# sourceMappingURL=PostReader.js.map

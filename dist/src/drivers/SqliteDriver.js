@@ -288,4 +288,5 @@ class SqliteDriver extends AbstractDriver_1.AbstractDriver {
     }
 }
 exports.SqliteDriver = SqliteDriver;
+
 //# sourceMappingURL=SqliteDriver.js.map

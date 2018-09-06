@@ -389,6 +389,7 @@ export abstract class AbstractDriver {
                 let index = ownerEntity.Indexes.find(index => {
                     return (
                         index.isUnique &&
+                        index.columns.length === 1 &&
                         index.columns.some(col => {
                             return col.name == ownerColumn!.tsName;
                         })

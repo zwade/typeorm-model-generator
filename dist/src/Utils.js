@@ -17,4 +17,5 @@ function packageVersion() {
     return `${packagejson.name}@${packagejson.version}`;
 }
 exports.packageVersion = packageVersion;
+
 //# sourceMappingURL=Utils.js.map

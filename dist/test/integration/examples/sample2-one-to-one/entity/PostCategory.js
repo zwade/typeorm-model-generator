@@ -24,4 +24,5 @@ PostCategory = __decorate([
     typeorm_1.Entity("PostCategory")
 ], PostCategory);
 exports.PostCategory = PostCategory;
+
 //# sourceMappingURL=PostCategory.js.map

@@ -47,4 +47,5 @@ class NamingStrategy extends AbstractNamingStrategy_1.AbstractNamingStrategy {
     }
 }
 exports.NamingStrategy = NamingStrategy;
+
 //# sourceMappingURL=NamingStrategy.js.map

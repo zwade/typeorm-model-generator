@@ -31,4 +31,5 @@ Author = __decorate([
     typeorm_1.Entity("Author")
 ], Author);
 exports.Author = Author;
+
 //# sourceMappingURL=Author.js.map

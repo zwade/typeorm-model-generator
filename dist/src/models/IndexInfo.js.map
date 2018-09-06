@@ -1,1 +1,1 @@
-{"version":3,"file":"IndexInfo.js","sourceRoot":"","sources":["../../../src/models/IndexInfo.ts"],"names":[],"mappings":""}
+{"version":3,"sources":["../src/models/IndexInfo.ts"],"names":[],"mappings":"","file":"IndexInfo.js","sourcesContent":["interface IndexInfo {\n    name: string;\n    columns: IndexColumnInfo[];\n    isUnique: boolean;\n    isPrimaryKey: boolean;\n}\n"]}
