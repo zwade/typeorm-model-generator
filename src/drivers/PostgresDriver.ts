@@ -215,6 +215,10 @@ export class PostgresDriver extends AbstractDriver {
                             colInfo.ts_type = "string";
                             colInfo.sql_type = "xml";
                             break;
+                        case "bpchar":
+                            colInfo.ts_type = "string";
+                            colInfo.sql_type = "character";
+                            break;
                         default:
                             // Assume that it's a user-defined enum
                             colInfo.ts_type = { kind: "enum", name: resp.udt_name };
