@@ -29,5 +29,4 @@ quests = __decorate([
     typeorm_1.Entity("quests")
 ], quests);
 exports.quests = quests;
-
 //# sourceMappingURL=quests.js.map

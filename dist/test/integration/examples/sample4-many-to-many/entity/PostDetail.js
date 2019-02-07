@@ -37,5 +37,4 @@ PostDetail = __decorate([
     typeorm_1.Entity("PostDetail")
 ], PostDetail);
 exports.PostDetail = PostDetail;
-
 //# sourceMappingURL=PostDetail.js.map

@@ -48,5 +48,4 @@ EverythingEntity = __decorate([
     typeorm_1.Entity("EverythingEntity")
 ], EverythingEntity);
 exports.EverythingEntity = EverythingEntity;
-
 //# sourceMappingURL=EverythingEntity.js.map

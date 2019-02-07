@@ -13,5 +13,4 @@ class DatabaseModel {
     }
 }
 exports.DatabaseModel = DatabaseModel;
-
 //# sourceMappingURL=DatabaseModel.js.map

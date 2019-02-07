@@ -34,5 +34,4 @@ PostAuthor = __decorate([
     typeorm_1.Entity("PostAuthor")
 ], PostAuthor);
 exports.PostAuthor = PostAuthor;
-
 //# sourceMappingURL=PostAuthor.js.map

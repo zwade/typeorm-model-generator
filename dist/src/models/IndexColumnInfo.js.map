@@ -1,1 +1,1 @@
-{"version":3,"sources":["../src/models/IndexColumnInfo.ts"],"names":[],"mappings":"","file":"IndexColumnInfo.js","sourcesContent":["interface IndexColumnInfo {\n    name: string;\n    sqlName: string;\n}\n"]}
+{"version":3,"file":"IndexColumnInfo.js","sourceRoot":"","sources":["../../../src/models/IndexColumnInfo.ts"],"names":[],"mappings":""}

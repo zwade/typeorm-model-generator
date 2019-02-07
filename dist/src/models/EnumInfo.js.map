@@ -1,1 +1,1 @@
-{"version":3,"sources":["../src/models/EnumInfo.ts"],"names":[],"mappings":";;AAAA;CAGC;AAHD,4BAGC","file":"EnumInfo.js","sourcesContent":["export class EnumInfo {\n\tname: string;\n\tvalues: string[];\n}"]}
+{"version":3,"file":"EnumInfo.js","sourceRoot":"","sources":["../../../src/models/EnumInfo.ts"],"names":[],"mappings":";;AAAA,MAAa,QAAQ;CAGpB;AAHD,4BAGC"}

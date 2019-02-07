@@ -364,5 +364,4 @@ class MysqlDriver extends AbstractDriver_1.AbstractDriver {
     }
 }
 exports.MysqlDriver = MysqlDriver;
-
 //# sourceMappingURL=MysqlDriver.js.map

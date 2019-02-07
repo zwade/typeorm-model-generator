@@ -18,5 +18,4 @@ class EntityInfo {
     }
 }
 exports.EntityInfo = EntityInfo;
-
 //# sourceMappingURL=EntityInfo.js.map

@@ -446,5 +446,4 @@ class PostgresDriver extends AbstractDriver_1.AbstractDriver {
     }
 }
 exports.PostgresDriver = PostgresDriver;
-
 //# sourceMappingURL=PostgresDriver.js.map

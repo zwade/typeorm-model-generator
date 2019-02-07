@@ -166,5 +166,4 @@ console.log(`[${new Date().toLocaleTimeString()}] Starting creation of model cla
 engine.createModelFromDatabase().then(() => {
     console.info(`[${new Date().toLocaleTimeString()}] Typeorm model classes created.`);
 });
-
 //# sourceMappingURL=index.js.map

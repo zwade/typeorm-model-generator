@@ -23,14 +23,15 @@ export class {{toEntityName EntityName}} {
         })
     {{toPropertyName tsName}}:{{tsTypeToString ts_type}}{{#is_nullable}} | null{{/is_nullable}};
         {{/relations}}{{#relations}}
-    @{{relationType}}(type=>{{toEntityName relatedTable}}, {{toEntityName relatedTable}}=>{{toEntityName relatedTable}}.{{#if isOwner}}{{toPropertyName ownerColumn}},{ {{#../isPrimary}}primary:true,{{/../isPrimary}}{{^../is_nullable}} nullable:false,{{/../is_nullable}}{{#actionOnDelete}}onDelete: '{{.}}',{{/actionOnDelete}}{{#actionOnUpdate}}onUpdate: '{{.}}'{{/actionOnUpdate}} }{{else}}{{toPropertyName relatedColumn}}{{#actionOnDelete}},{ onDelete: '{{.}}' }{{/actionOnDelete}}{{/if}}){{#isOwner}}
+    @{{relationType}}(type=>{{toEntityName relatedTable}}, {{toEntityName relatedTable}}=>{{toEntityName relatedTable}}.{{#if isOwner}}{{toPropertyName ownerColumn}}{{#if relationIdField}}{{else}},{ {{#../isPrimary}}primary:true,{{/../isPrimary}}{{^../is_nullable}} nullable:false,{{/../is_nullable}}{{#actionOnDelete}}onDelete: '{{.}}',{{/actionOnDelete}}{{#actionOnUpdate}}onUpdate: '{{.}}'{{/actionOnUpdate}} }{{/if}}{{else}}{{toPropertyName relatedColumn}}{{#actionOnDelete}},{ onDelete: '{{.}}' }{{/actionOnDelete}}{{/if}}){{#isOwner}}
     {{#if isManyToMany}}@JoinTable({{#joinInfo}}{ name: '{{joinTable}}', joinColumns: [{{#joinColumns}} { name: "{{.}}" },{{/joinColumns}} ], inverseJoinColumns: [{{#inverseJoinColumns}} { name: "{{.}}" },{{/inverseJoinColumns}} ] }{{/joinInfo}}){{else}}@JoinColumn({ name:'{{ ../sqlName}}'}){{/if}}{{/isOwner}}
     {{#if (or isOneToMany isManyToMany)}}{{toPropertyName ../tsName}}:{{toLazy (concat  (toEntityName relatedTable) "[]")}};
     {{else}}{{toPropertyName ../tsName}}:{{toLazy (concat (toEntityName relatedTable) ' | null')}};
     {{/if}}
     {{#if relationIdField }}
 
-    @RelationId(({{../../EntityName}}: {{toEntityName ../../EntityName}}) => {{../../EntityName}}.{{toPropertyName ../tsName}})
+    @RelationId(({{../../EntityName}}: {{toEntityName ../../EntityName}}) => {{../../EntityName}}.{{toPropertyName ../tsName}}){{#if ../isPrimary}}
+    @PrimaryColumn({ name: "{{../sqlName}}", nullable: {{../is_nullable}} }){{/if}}
     {{toPropertyName ../tsName}}Id: {{#if (or isOneToOne isManyToOne)}}{{../ts_type}}{{else}}{{toLazy (concat  ../ts_type "[]")}}{{/if}};{{/if}}{{/relations}}
     {{/Columns}}
     {{#if GenerateConstructor}}

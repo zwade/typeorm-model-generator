@@ -8,5 +8,4 @@ class MariaDbDriver extends MysqlDriver_1.MysqlDriver {
     }
 }
 exports.MariaDbDriver = MariaDbDriver;
-
 //# sourceMappingURL=MariaDbDriver.js.map

@@ -160,5 +160,4 @@ Post = __decorate([
     typeorm_1.Entity("Post")
 ], Post);
 exports.Post = Post;
-
 //# sourceMappingURL=Post.js.map

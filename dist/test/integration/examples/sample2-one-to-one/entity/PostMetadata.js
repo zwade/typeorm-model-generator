@@ -29,5 +29,4 @@ PostMetadata = __decorate([
     typeorm_1.Entity("PostMetadata")
 ], PostMetadata);
 exports.PostMetadata = PostMetadata;
-
 //# sourceMappingURL=PostMetadata.js.map

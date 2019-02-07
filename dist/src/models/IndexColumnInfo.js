@@ -1,3 +1,1 @@
-
-
 //# sourceMappingURL=IndexColumnInfo.js.map
