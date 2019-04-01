@@ -134,6 +134,28 @@ export abstract class AbstractDriver {
                 col1Rel.isOwner = true;
                 col1Rel.ownerColumn = namesOfRelatedTables[0];
 
+                const entityColumnsWithRelations = entity.Columns.filter(
+                    col => col.relations.length > 0
+                );
+                const x = util.inspect.defaultOptions.depth;
+                util.inspect.defaultOptions.depth = 1000;
+                console.log(entity.Columns, namesOfRelatedTables);
+                util.inspect.defaultOptions.depth = x;
+                col1Rel.joinInfo = {
+                    inverseJoinColumns: entity.Columns.filter(col =>
+                        col.relations.some(
+                            rel => rel.relatedTable === namesOfRelatedTables[1]
+                        )
+                    ).map(col => col.options.name!),
+                    joinColumns: entity.Columns.filter(col =>
+                        col.relations.some(
+                            rel => rel.relatedTable === namesOfRelatedTables[0]
+                        )
+                    ).map(col => col.options.name!),
+                    joinTable: entity.sqlEntityName
+                };
+                console.log(col1Rel.joinInfo);
+
                 column1.relations.push(col1Rel);
                 relatedTable1.Columns.push(column1);
 
