@@ -15,5 +15,6 @@ export class ColumnInfo {
         | "string | string[]"
         | "any"
         | string;
+    public isCustomType: boolean = false;
     public relations: RelationInfo[] = [];
 }

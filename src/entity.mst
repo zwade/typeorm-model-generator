@@ -18,8 +18,8 @@ import {BaseEntity,Column,Entity,Index,JoinColumn,JoinTable,ManyToMany,ManyToOne
         width:{{.}},{{/width}}{{#default}}
         default: {{.}},{{/default}}{{#precision}}
         precision:{{.}},{{/precision}}{{#scale}}
-        scale:{{.}},{{/scale}}{{#enum}}
-        enum:[{{.}}],{{/enum}}{{#array}}
+        scale:{{.}},{{/scale}}{{#if enum}}
+        enum:[{{#each enum}}"{{.}}",{{/each}}],{{/if}}{{#array}}
         array:{{array}},{{/array}}
         name:"{{name}}"
         }){{/options}}
@@ -33,7 +33,7 @@ import {BaseEntity,Column,Entity,Index,JoinColumn,JoinTable,ManyToMany,ManyToOne
     {{#if relationIdField }}
 
     @RelationId(({{../../tsEntityName}}: {{toEntityName ../../tsEntityName}}) => {{../../tsEntityName}}.{{toPropertyName ../tsName}})
-    {{toPropertyName ../tsName}}Id: {{#if isOneToOne}}{{toLazy ../tsType}}{{else}}{{toLazy (concat  ../tsType "[]")}}{{/if}};{{/if}}{{/relations}}
+    {{toPropertyName ../tsName}}Id: {{#if (or isManyToOne isOneToOne)}}{{../tsType}}{{else}}{{toLazy (concat  ../tsType "[]")}}{{/if}};{{/if}}{{/relations}}
     {{/Columns}}
     {{#if GenerateConstructor}}
     constructor(init?: Partial<{{toEntityName tsEntityName}}>) {

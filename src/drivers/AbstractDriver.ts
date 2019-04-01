@@ -1,3 +1,4 @@
+import * as changeCase from "change-case";
 import {
     WithLengthColumnType,
     WithPrecisionColumnType,
@@ -10,6 +11,8 @@ import { EntityInfo } from "../models/EntityInfo";
 import { EnumInfo } from "../models/EnumInfo";
 import { RelationInfo } from "../models/RelationInfo";
 import * as TomgUtils from "../Utils";
+
+import * as util from "util";
 
 export abstract class AbstractDriver {
     public abstract standardPort: number;
@@ -278,9 +281,15 @@ export abstract class AbstractDriver {
                     ind =>
                         ind.isUnique &&
                         ind.columns.length === 1 &&
-                        ind.columns[0].name === ownerColumn!.tsName
+                        ind.columns.some(
+                            col => col.name === ownerColumn!.tsName
+                        )
                 );
                 isOneToMany = !index;
+                const x = util.inspect.defaultOptions.depth;
+                util.inspect.defaultOptions.depth = 1000;
+                console.log(ownerEntity, ownerColumn);
+                util.inspect.defaultOptions.depth = x;
 
                 const ownerRelation = new RelationInfo();
                 ownerRelation.actionOnDelete = relationTmp.actionOnDelete;

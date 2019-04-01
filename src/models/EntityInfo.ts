@@ -16,6 +16,9 @@ export class EntityInfo {
     public relationImports() {
         const imports: string[] = [];
         this.Columns.forEach(column => {
+            if (column.isCustomType) {
+                imports.push(column.tsType);
+            }
             column.relations.forEach(relation => {
                 if (this.tsEntityName !== relation.relatedTable) {
                     imports.push(relation.relatedTable);

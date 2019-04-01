@@ -145,6 +145,9 @@ function addImportsAndGenerationOptions(
     dbModel.forEach(element => {
         element.Imports = [];
         element.Columns.forEach(column => {
+            if (column.isCustomType) {
+                element.Imports.push(column.tsType);
+            }
             column.relations.forEach(relation => {
                 if (element.tsEntityName !== relation.relatedTable) {
                     element.Imports.push(relation.relatedTable);
@@ -268,6 +271,7 @@ function createHandlebarsHelpers(generationOptions: IGenerationOptions) {
                 retStr = str;
                 break;
         }
+        // console.log(str, '-->', retStr);
         return retStr;
     });
     Handlebars.registerHelper("concat", (stra, strb) => {

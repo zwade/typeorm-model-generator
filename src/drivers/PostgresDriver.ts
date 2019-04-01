@@ -1,3 +1,4 @@
+import * as changeCase from "change-case";
 import * as PG from "pg";
 import { ConnectionOptions } from "typeorm";
 import * as TypeormDriver from "typeorm/driver/postgres/PostgresDriver";
@@ -110,6 +111,7 @@ export class PostgresDriver extends AbstractDriver {
                         resp.data_type,
                         resp.udt_name
                     );
+
                     if (!columnTypes.sql_type || !columnTypes.ts_type) {
                         if (
                             resp.data_type === "USER-DEFINED" ||
@@ -134,6 +136,22 @@ export class PostgresDriver extends AbstractDriver {
                         return;
                     }
                     colInfo.options.type = columnTypes.sql_type as any;
+                    colInfo.isCustomType = columnTypes.is_custom_type;
+                    if (colInfo.isCustomType) {
+                        const customEnum = this.customTypes.find(
+                            val => val.name === resp.udt_name
+                        );
+                        if (!customEnum) {
+                            TomgUtils.LogError(
+                                `Tried to use custom user type ${
+                                    columnTypes.ts_type
+                                }, but was unable to find it in the schema.`
+                            );
+                            return;
+                        }
+                        colInfo.options.type = "enum";
+                        colInfo.options.enum = customEnum.values;
+                    }
                     colInfo.tsType = columnTypes.ts_type;
                     colInfo.options.array = columnTypes.is_array;
                     if (colInfo.options.array) {
@@ -195,7 +213,13 @@ export class PostgresDriver extends AbstractDriver {
                 | null;
             sql_type: string | null;
             is_array: boolean;
-        } = { ts_type: null, sql_type: null, is_array: false };
+            is_custom_type: boolean;
+        } = {
+            ts_type: null,
+            sql_type: null,
+            is_array: false,
+            is_custom_type: false
+        };
         ret.sql_type = dataType;
         switch (dataType) {
             case "int2":
@@ -408,7 +432,8 @@ export class PostgresDriver extends AbstractDriver {
                 }
 
                 ret.sql_type = udtName;
-                ret.ts_type = udtName;
+                ret.ts_type = changeCase.pascalCase(udtName);
+                ret.is_custom_type = true;
                 break;
             default:
                 ret.ts_type = null;
