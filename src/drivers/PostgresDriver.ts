@@ -5,6 +5,7 @@ import { DataTypeDefaults } from "typeorm/driver/types/DataTypeDefaults";
 import { IConnectionOptions } from "../IConnectionOptions";
 import { ColumnInfo } from "../models/ColumnInfo";
 import { EntityInfo } from "../models/EntityInfo";
+import { EnumInfo } from "../models/EnumInfo";
 import * as TomgUtils from "../Utils";
 import { AbstractDriver } from "./AbstractDriver";
 
@@ -28,6 +29,35 @@ export class PostgresDriver extends AbstractDriver {
         )).rows;
         return response;
     };
+
+    public async GetEnums(schema: string): Promise<EnumInfo[]> {
+        const enumsResponse: Array<{
+            enum_name: string;
+            enum_value: string;
+        }> = (await this.Connection.query(`
+            SELECT t.typname AS enum_name,
+                e.enumlabel AS enum_value
+            FROM pg_type t
+                JOIN pg_enum e ON t.oid = e.enumtypid
+                JOIN pg_catalog.pg_namespace n ON n.oid = t.typnamespace
+            WHERE n.nspname = ${schema}`)).rows;
+        const enums = enumsResponse.reduce(
+            (enumMap, { enum_name, enum_value }) => {
+                if (!enumMap.has(enum_name)) {
+                    enumMap.set(enum_name, []);
+                }
+
+                enumMap.get(enum_name)!.push(enum_value);
+                return enumMap;
+            },
+            new Map<string, string[]>()
+        );
+
+        return Array.from(enums.keys()).map(name => ({
+            name,
+            values: enums.get(name)!
+        }));
+    }
 
     public async GetCoulmnsFromEntity(
         entities: EntityInfo[],
@@ -160,6 +190,7 @@ export class PostgresDriver extends AbstractDriver {
                 | "string | Object"
                 | "string | string[]"
                 | "any"
+                | string
                 | null;
             sql_type: string | null;
             is_array: boolean;
@@ -357,18 +388,26 @@ export class PostgresDriver extends AbstractDriver {
                 ret.is_array = true;
                 break;
             case "USER-DEFINED":
-                ret.sql_type = udtName;
-                ret.ts_type = "string";
-                switch (udtName) {
-                    case "citext":
-                    case "hstore":
-                    case "geometry":
-                        break;
-                    default:
-                        ret.ts_type = null;
-                        ret.sql_type = null;
-                        break;
+                if (
+                    udtName === "citext" ||
+                    udtName === "hstore" ||
+                    udtName === "geometry"
+                ) {
+                    ret.sql_type = udtName;
+                    ret.ts_type = "string";
+                    break;
                 }
+                const type = this.customTypes.find(
+                    ({ name }) => name === udtName
+                );
+                if (type === undefined) {
+                    ret.sql_type = null;
+                    ret.ts_type = null;
+                    break;
+                }
+
+                ret.sql_type = udtName;
+                ret.ts_type = udtName;
                 break;
             default:
                 ret.ts_type = null;

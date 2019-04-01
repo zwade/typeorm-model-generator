@@ -13,6 +13,7 @@ import { SqliteDriver } from "./drivers/SqliteDriver";
 import { IConnectionOptions } from "./IConnectionOptions";
 import { IGenerationOptions } from "./IGenerationOptions";
 import { EntityInfo } from "./models/EntityInfo";
+import { EnumInfo } from "./models/EnumInfo";
 import { NamingStrategy } from "./NamingStrategy";
 import * as TomgUtils from "./Utils";
 
@@ -41,7 +42,10 @@ export async function createModelFromDatabase(
     connectionOptions: IConnectionOptions,
     generationOptions: IGenerationOptions
 ) {
-    let dbModel = await dataCollectionPhase(driver, connectionOptions);
+    let [dbModel, customTypes] = await dataCollectionPhase(
+        driver,
+        connectionOptions
+    );
     if (dbModel.length === 0) {
         TomgUtils.LogError(
             "Tables not found in selected database. Skipping creation of typeorm model.",
@@ -54,7 +58,12 @@ export async function createModelFromDatabase(
         generationOptions,
         driver.defaultValues
     );
-    modelGenerationPhase(connectionOptions, generationOptions, dbModel);
+    modelGenerationPhase(
+        connectionOptions,
+        generationOptions,
+        dbModel,
+        customTypes
+    );
 }
 export async function dataCollectionPhase(
     driver: AbstractDriver,
@@ -169,7 +178,8 @@ function setRelationId(
 export function modelGenerationPhase(
     connectionOptions: IConnectionOptions,
     generationOptions: IGenerationOptions,
-    databaseModel: EntityInfo[]
+    databaseModel: EntityInfo[],
+    customTypes: EnumInfo[]
 ) {
     createHandlebarsHelpers(generationOptions);
     const templatePath = path.resolve(__dirname, "../../src/entity.mst");
@@ -208,6 +218,34 @@ export function modelGenerationPhase(
         }
         const resultFilePath = path.resolve(entitesPath, casedFileName + ".ts");
         const rendered = compliedTemplate(element);
+        fs.writeFileSync(resultFilePath, rendered, {
+            encoding: "UTF-8",
+            flag: "w"
+        });
+    });
+    const enumTemplatePath = path.resolve(__dirname, "../../src/enum.mst");
+    const enumTemplate = fs.readFileSync(enumTemplatePath, "UTF-8");
+    const compiledEnumTemplate = Handlebars.compile(enumTemplate, {
+        noEscape: true
+    });
+    customTypes.forEach(en => {
+        const rendered = compiledEnumTemplate(en);
+        let casedFileName = "";
+        switch (generationOptions.convertCaseFile) {
+            case "camel":
+                casedFileName = changeCase.camelCase(en.name);
+                break;
+            case "param":
+                casedFileName = changeCase.paramCase(en.name);
+                break;
+            case "pascal":
+                casedFileName = changeCase.pascalCase(en.name);
+                break;
+            case "none":
+                casedFileName = en.name;
+                break;
+        }
+        const resultFilePath = path.resolve(entitesPath, casedFileName + ".ts");
         fs.writeFileSync(resultFilePath, rendered, {
             encoding: "UTF-8",
             flag: "w"
@@ -284,6 +322,9 @@ function createHandlebarsHelpers(generationOptions: IGenerationOptions) {
             return str;
         }
     });
+    Handlebars.registerHelper("constantCase", str =>
+        changeCase.constantCase(str)
+    );
     Handlebars.registerHelper({
         and: (v1, v2) => v1 && v2,
         eq: (v1, v2) => v1 === v2,

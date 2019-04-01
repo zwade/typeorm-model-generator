@@ -7,6 +7,7 @@ import { DataTypeDefaults } from "typeorm/driver/types/DataTypeDefaults";
 import { IConnectionOptions } from "../IConnectionOptions";
 import { ColumnInfo } from "../models/ColumnInfo";
 import { EntityInfo } from "../models/EntityInfo";
+import { EnumInfo } from "../models/EnumInfo";
 import { RelationInfo } from "../models/RelationInfo";
 import * as TomgUtils from "../Utils";
 
@@ -69,6 +70,10 @@ export abstract class AbstractDriver {
             DB_NAME: string;
         }>
     >;
+
+    public customTypes: EnumInfo[] = [];
+
+    public abstract async GetEnums(schema: string): Promise<EnumInfo[]>;
 
     public FindManyToManyRelations(dbModel: EntityInfo[]) {
         const manyToManyEntities = dbModel.filter(
@@ -145,12 +150,13 @@ export abstract class AbstractDriver {
     }
     public async GetDataFromServer(
         connectionOptons: IConnectionOptions
-    ): Promise<EntityInfo[]> {
+    ): Promise<[EntityInfo[], EnumInfo[]]> {
         let dbModel = [] as EntityInfo[];
         await this.ConnectToServer(connectionOptons);
         const sqlEscapedSchema = this.escapeCommaSeparatedList(
             connectionOptons.schemaName
         );
+        this.customTypes = await this.GetEnums(sqlEscapedSchema);
         dbModel = await this.GetAllTables(
             sqlEscapedSchema,
             connectionOptons.databaseName
@@ -173,7 +179,7 @@ export abstract class AbstractDriver {
         await this.DisconnectFromServer();
         dbModel = this.FindManyToManyRelations(dbModel);
         this.FindPrimaryColumnsFromIndexes(dbModel);
-        return dbModel;
+        return [dbModel, this.customTypes];
     }
 
     public abstract async ConnectToServer(connectionOptons: IConnectionOptions);
