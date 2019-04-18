@@ -10,7 +10,7 @@ output/**/*.*
 .nyc_output/
 coverage/
 .env
-dist
 *.tgz
+dist/test
 !gulpfile.js
 .tomg-config
